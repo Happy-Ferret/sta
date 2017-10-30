@@ -1,0 +1,63 @@
+\documentclass[a4paper, 11pt, landscape]{article}
+\usepackage{jipkg}
+\usepackage{tikz-uml}
+
+%Titre et auteur
+\jihypersetup{TexteAventure UML Class Diagram}{Quentin Ribac}
+\title{TexteAventure UML Class Diagram}
+\author{Quentin \textsc{Ribac}}
+\date{\today}
+
+\begin{document}
+%Début du document
+\maketitle
+\newpage
+
+\begin{tikzpicture}
+	\begin{umlpackage}[x = 0, y = 0]{textav}
+		% Room, Character & Item
+		\umlclass[x = 5, y = 0]{Room}{
+			+ name : string\\
+			+ description : const string
+		}{}
+		\umlassoc[mult1 = *, mult2 = *, angle1 = 160, angle2 = -160, loopsize = 2cm]{Room}{Room}
+		\umlclass[x = 5, y = -10]{Character}{
+			+ name : string\\
+			+ description : const string\\
+			− health : int
+		}{
+			− chat() : void\\
+			+ hit(target : Character) : int
+		}
+		\umluniassoc[stereo = is in, mult1 = *, mult2 = 1, pos1 = 0.1, pos2 = 0.9]{Character}{Room}
+		\umlclass[x = 12, y = -5]{Item}{
+			+ name : string\\
+			+ description : const string
+		}{}
+
+		% Game
+		\umlclass[x = 0, y = -5]{Game}{}{}
+		\umlassoc[mult1 = 1, mult2 = 0..1]{Character}{Game}
+
+		% ItemContainer
+		\umlinterface[x = 20, y = -5]{ItemContainer}{}{}
+		\umlimpl[angle1 = 0]{Room}{ItemContainer}
+		\umlimpl[angle1 = 0]{Character}{ItemContainer}
+		\umlimpl[anchor1 = 10, anchor2 = 170]{Item}{ItemContainer}
+		\umluniassoc[stereo = is in, mult1 = 0..*, mult2 = 1, anchor1 = -10, anchor2 = -170]{Item}{ItemContainer}
+
+		% Event
+		\umlclass[x = 15, y = -10]{Event}{
+			+ triggers : Trigger[]
+		}{
+			− action() : void
+		}
+		\umlclass[x = 20, y = -10]{Trigger}{}{
+			− check() : bool
+		}
+		\umlassoc[mult1 = *, mult2 = 1..*]{Event}{Trigger}
+	\end{umlpackage}
+\end{tikzpicture}
+
+\end{document}
+
