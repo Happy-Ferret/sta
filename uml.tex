@@ -1,16 +1,16 @@
+% sta UML — Quentin Ribac © 2017
+% This is free software, see LICENSE file for details.
 \documentclass[a4paper, 11pt]{article}
 \usepackage{jipkg}
 \usepackage{tikz-uml}
 \usepackage{pdflscape}
 
-%Titre et auteur
 \jihypersetup{sta UML}{Quentin Ribac}
 \title{sta UML}
 \author{Quentin \textsc{Ribac}}
 \date{\today}
 
 \begin{document}
-%Début du document
 \selectlanguage{english}
 \maketitle
 \section*{Introduction}
@@ -18,102 +18,69 @@ This document is meant to present the different UML diagrams which will be made 
 
 UML diagrams in this document are set in \LaTeX{} using the \texttt{tikz-uml} package made by Nicolas \textsc{Kielbasiewicz}. See \url{http://ensta-paristech.fr/~kielbasi/tikz-uml} for more information this package. I am also using my own package \texttt{jipkg} for usual inclusions. See it on GitHub at \url{https://github.com/ribacq/jiltx}.
 
+\begin{landscape}
 \section{Class Diagram for the \texttt{server} package}
-\begin{figure}[h]\label{pkg: server}
+\begin{figure}[h]\label{pkg: server}\center{
 \begin{tikzpicture}
 	\begin{umlpackage}[x = 0, y = 0]{server}
-		% Room, Character & Item
-		\umlsimpleclass[x = 5, y = 0]{Room}
-		\umlassoc[mult1 = *, mult2 = *, angle1 = 180, angle2 = -135, loopsize = 2cm]{Room}{Room}
-		\umlsimpleclass[x = 5, y = -10]{Character}
-		\umluniassoc[stereo = is in, mult1 = *, mult2 = 1, pos1 = 0.1, pos2 = 0.9]{Character}{Room}
-		\umlsimpleclass[x = 8, y = -5]{Item}
+		% Classes
+		\umlclass[x = 12, y = 0]{Thing}{
+			− name : string\\
+			− description : string\\
+			+ contentsMax : const int\\
+			− contents : Item[]
+			− tags : string[]
+		}{
+			+ look() : string\\
+			+ deposit(Item) : void\\
+			+ retrieve() : Item
+		}
+		\umlclass[x = -2, y = -6]{Game}{
+			− input : input stream\\
+			− output : output stream
+		}{
+			+ read() : string\\
+			+ write(string) : void
+		}
+		\umlclass[x = 6, y = -6]{Character}{
+			− hp : int\\
+			− hpMax : int
+		}{
+			+ sayHi() : string
+		}
+		\umlclass[x = 12, y = -6]{Room}{
+			%
+		}{
+			%
+		}
+		\umlclass[x = 18, y = -6]{Item}{
+			%
+		}{
+			%
+		}
+		\umlclass[x = 0, y = 0]{Event}{
+			%
+		}{
+			%
+		}
 
-		% Game
-		\umlsimpleclass[x = 0, y = -5]{Game}
-		\umlassoc[mult1 = 1, mult2 = 0..1]{Character}{Game}
+		% Relations
+		\umlVHVinherit{Character}{Thing} % Character is a Thing
+		\umlinherit{Room}{Thing} % Room is a Thing
+		\umlVHVinherit[anchor1 = 120]{Item}{Thing} % Item is a Thing
 
-		% ItemContainer
-		\umlsimpleinterface[x = 12, y = -5]{ItemContainer}
-		\umlimpl[angle1 = 0]{Room}{ItemContainer}
-		\umlimpl[angle1 = 0]{Character}{ItemContainer}
-		\umlimpl[anchor1 = 10, anchor2 = 170]{Item}{ItemContainer}
-		\umluniassoc[stereo = is in, mult1 = 0..*, mult2 = 1, anchor1 = -10, anchor2 = -170]{Item}{ItemContainer}
+		\umluniassoc[mult1 = 1, mult2 = 0..1, stereo = connected via]{Character}{Game} % Character --> Game
+		\umluniassoc[mult1 = *, mult2 = 0..1, stereo = links to]{Item}{Room} % Item link to Room
+		\umluniassoc[mult1 = *, mult2 = 1, stereo = is in]{Character}{Room} % Character is in Room
+		\umlVHuniassoc[mult1 = *, mult2 = 1, stereo = is in, anchor1 = 60]{Item}{Thing} % Item is in Thing
 
-		% Event
-		\umlsimpleclass[x = 8, y = 0]{Event}
-		\umlsimpleclass[x = 12, y = 0]{Trigger}
-		\umlsimpleclass[x = 12, y = -1.5]{Action}
-		\umlassoc[mult1 = *, mult2 = 1..*]{Event}{Trigger}
-		\umlassoc[mult1 = *, mult2 = 1]{Event}{Action}
+		\umluniassoc[mult1 = *, mult2 = 1, anchors =  25 and  155, stereo = triggered by]{Event}{Thing} % Event is triggered by Thing
+		\umluniassoc[mult1 = *, mult2 = 1, anchors = -25 and -155, stereo = action on]{Event}{Thing} % Event has action on Thing
 	\end{umlpackage}
 \end{tikzpicture}
 \caption{Package: \texttt{server}}
-\end{figure}
-
-\section{Interfaces}
-\begin{figure}[h]\label{itf: ItemContainer}\center{
-\begin{tikzpicture}
-	\umlinterface{ItemContainer}{
-		− limit : int\\
-		− contents : Item[]
-	}{
-		+ push(Item) : void\\
-		+ pop() : Item
-	}
-\end{tikzpicture}
-\caption{Interface: \texttt{ItemContainer}}
 }\end{figure}
-
-\begin{figure}[h]\label{itf: Lookable}\center{
-\begin{tikzpicture}
-	\umlinterface{Lookable}{
-		− name : string\\
-		− desc : string
-	}{
-		+ look() : string
-	}
-\end{tikzpicture}
-\caption{Interface: \texttt{Lookable}}
-}\end{figure}
-
-\section{Detailed classes}
-\subsection{Game elements}
-\begin{figure}[h]\label{cls: Room}\center{
-\begin{tikzpicture}
-	\umlclass{Room}{
-		%
-	}{
-		%
-	}
-	\umlassoc[mult1 = *, mult2 = *]{Room}{Room}
-\end{tikzpicture}
-\caption{Class: \texttt{Room}}
-}\end{figure}
-
-\begin{figure}[h]\label{cls: Item}\center{
-\begin{tikzpicture}
-	\umlclass{Item}{
-		%
-	}{
-		%
-	}
-\end{tikzpicture}
-\caption{Class: \texttt{Item}}
-}\end{figure}
-
-\begin{figure}[h]\label{cls: Character}\center{
-\begin{tikzpicture}
-	\umlclass{Character}{
-		%
-	}{
-		%
-	}
-\end{tikzpicture}
-\caption{Class: \texttt{Character}}
-}\end{figure}
-
-\listoffigures
+\end{landscape}
 
 \end{document}
 
