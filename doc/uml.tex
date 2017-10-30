@@ -25,26 +25,27 @@ UML diagrams in this document are set in \LaTeX{} using the \texttt{tikz-uml} pa
 	\begin{umlpackage}[x = 0, y = 0]{server}
 		% Classes
 		\umlclass[x = 12, y = 0]{Thing}{
-			− name : string\\
-			− description : string\\
-			+ contentsMax : const int\\
-			− contents : Item[]
-			− tags : string[]
+			+ name string\\
+			+ description string\\
+			+ contentsMax const int\\
+			+ contents []Item\\
+			+ tags []string\\
+			+ commands map[string]func(args ...string)
 		}{
-			+ look() : string\\
-			+ deposit(Item) : void\\
-			+ retrieve() : Item
+			+ look() string\\
+			+ deposit(Item)\\
+			+ retrieve() Item\\
+			+ call(string) string
 		}
 		\umlclass[x = -2, y = -6]{Game}{
-			− input : input stream\\
-			− output : output stream
+			+ in : io.Reader\\
+			+ out : io.Writer
 		}{
-			+ read() : string\\
-			+ write(string) : void
+			%
 		}
 		\umlclass[x = 6, y = -6]{Character}{
-			− hp : int\\
-			− hpMax : int
+			+ hp int\\
+			+ hpMax int
 		}{
 			+ sayHi() : string
 		}
@@ -69,13 +70,13 @@ UML diagrams in this document are set in \LaTeX{} using the \texttt{tikz-uml} pa
 		\umlinherit{Room}{Thing} % Room is a Thing
 		\umlVHVinherit[anchor1 = 120]{Item}{Thing} % Item is a Thing
 
-		\umluniassoc[mult1 = 1, mult2 = 0..1, stereo = connected via]{Character}{Game} % Character --> Game
+		\umluniassoc[mult1 = 0..1, mult2 = 1, stereo = controls]{Game}{Character} % Game controls Character
 		\umluniassoc[mult1 = *, mult2 = 0..1, stereo = links to]{Item}{Room} % Item link to Room
 		\umluniassoc[mult1 = *, mult2 = 1, stereo = is in]{Character}{Room} % Character is in Room
 		\umlVHuniassoc[mult1 = *, mult2 = 1, stereo = is in, anchor1 = 60]{Item}{Thing} % Item is in Thing
 
-		\umluniassoc[mult1 = *, mult2 = 1, anchors =  25 and  155, stereo = triggered by]{Event}{Thing} % Event is triggered by Thing
-		\umluniassoc[mult1 = *, mult2 = 1, anchors = -25 and -155, stereo = action on]{Event}{Thing} % Event has action on Thing
+		\umluniassoc[mult1 = *, mult2 = 1, anchors =  25 and  155, stereo = is triggered by]{Event}{Thing} % Event is triggered by Thing
+		\umluniassoc[mult1 = *, mult2 = 1, anchors = -25 and -155, stereo = calls command on]{Event}{Thing} % Event calls command on Thing
 	\end{umlpackage}
 \end{tikzpicture}
 \caption{Package: \texttt{server}}
