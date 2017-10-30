@@ -10,7 +10,7 @@ type Thing struct {
 }
 
 func (t Thing) look() string {
-	return t.name + ":\n" + t.description
+	return "You are looking at " + t.name + ": " + t.description
 }
 
 func (t Thing) deposit(it Item) {
