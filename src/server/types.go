@@ -1,5 +1,8 @@
 package server
 
+import "io"
+
+// Thing
 type Thing struct {
 	name string
 	description string
@@ -29,5 +32,47 @@ func (t Thing) call(command string) {
 	if f, ok := t.commands[command]; ok {
 		f()
 	}
+}
+
+// Character
+type Character struct {
+	thing Thing
+	hp int
+	hpMax int
+	stats struct {
+		constitution int
+		attention int
+		magic int
+		influence int
+		wisdom int
+	}
+}
+
+func (c Character) sayHi() string {
+	return c.thing.look()
+}
+
+// Room
+type Room struct {
+	thing Thing
+}
+
+// Item
+type Item struct {
+	thing Thing
+	container Thing
+}
+
+// Game
+type Game struct {
+	c Character
+	in io.Reader
+	out io.Writer
+}
+
+// Event
+type Event struct {
+	trigger func() bool
+	action func() string
 }
 
