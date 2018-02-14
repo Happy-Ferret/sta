@@ -1,26 +1,33 @@
 package main
 
 import (
-	"sta/server"
-	"fmt"
+	"bufio"
+	"os"
 	"strings"
+	"fmt"
 )
 
 func main() {
-	server.Launch();
-	game := server.NewGame("Jirsad")
-	var cmd string
+	// setting I/O
+	r := bufio.NewReader(os.Stdin)
+	w := bufio.NewWriter(os.Stdout)
+
+	fmt.Fprintf(w, "Bienvenue au Royaume de Reosal!\n")
+	w.Flush()
 	for {
-		fmt.Print("> ")
-		fmt.Scanln(&cmd)
-		args := strings.Split(cmd, " ")
-		fmt.Println()
-		if len(args) > 0 && args[0] != "quit" {
-			fmt.Println(game.C.T.Call(args[0]))
-		} else {
+		fmt.Fprintf(w, "> ")
+		w.Flush()
+		line, _ := r.ReadString('\n')
+		line = strings.Trim(line, " \n")
+		args := strings.Split(line, " ")
+
+		if strings.Compare(args[0], "quit") == 0 {
 			break
+		} else {
+			fmt.Fprintf(w, "%v %v\n", args[0], args[1:])
 		}
+		w.Flush()
 	}
-	fmt.Println("Please come again soon!")
+
 }
 
