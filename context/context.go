@@ -1,28 +1,44 @@
 package context
 
 import (
-	"github.com/ribacq/sta/parser"
+	"github.com/ribacq/sta/commands"
 )
 
 // types
+type CommandAction struct {
+	Action func (args []string) string
+	Help string
+}
+
 type Context struct {
 	Name string
-	CommandActions map[string]func (args []string) string
+	CommandActions map[string]CommandAction
 }
 
 // a default context
 func Default() *Context {
 	var c Context
 	c.Name = "the palace"
-	c.CommandActions = make(map[string]func (args []string) string)
-	c.CommandActions["look"] = func (args []string) string {
-		return "This is a wonderful palace."
-	}
+	c.CommandActions = make(map[string]CommandAction)
+	c.CommandActions["look"] = CommandAction{
+		func (args []string) string {
+			return "This is a wonderful palace."
+		},
+		"This command allows you to look around you."}
 	return &c
 }
 
+// extracts the command list from the CommandActions map
+func (c *Context) CommandList() []string {
+	cmds := make([]string, len(c.CommandActions))
+	for str := range c.CommandActions {
+		cmds = append(cmds, str)
+	}
+	return cmds
+}
+
 // whether the command exists in given context
-func (c *Context) HasCommand(cmd *parser.Command) bool {
+func (c *Context) HasCommand(cmd *commands.Command) bool {
 	for str, _ := range c.CommandActions {
 		if cmd.Cmd == str {
 			return true
@@ -32,9 +48,9 @@ func (c *Context) HasCommand(cmd *parser.Command) bool {
 }
 
 // execute a command
-func (c *Context) ExecCommand(cmd *parser.Command) (string, error) {
+func (c *Context) ExecCommand(cmd *commands.Command) (string, error) {
 	if !c.HasCommand(cmd) {
-		return "", parser.UnknownCommandError{*cmd}
+		return "", commands.UnknownCommandError{*cmd}
 	}
-	return c.CommandActions[cmd.Cmd](cmd.Args), nil
+	return c.CommandActions[cmd.Cmd].Action(cmd.Args), nil
 }

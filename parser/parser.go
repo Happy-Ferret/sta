@@ -1,6 +1,8 @@
 package parser
 
 import (
+	"github.com/ribacq/sta/commands"
+	"github.com/ribacq/sta/context"
 	"strings"
 )
 
@@ -9,23 +11,10 @@ const (
 	Builtins = "quit help"
 )
 
-// types
-type Command struct {
-	Cmd  string
-	Args []string
-}
-
-type UnknownCommandError struct {
-	Cmd Command
-}
-
-func (err UnknownCommandError) Error() string {
-	return "Unknown command: " + err.Cmd.Cmd
-}
-
 const (
 	NilFlag = iota
 	QuitFlag
+	ErrFlag
 )
 
 type ParserOutput struct {
@@ -39,7 +28,7 @@ func CommandList() []string {
 }
 
 // get whether a command exists
-func (cmd Command) Exists() bool {
+func Exists(cmd *commands.Command) bool {
 	for _, c := range CommandList() {
 		if cmd.Cmd == c {
 			return true
@@ -49,7 +38,7 @@ func (cmd Command) Exists() bool {
 }
 
 // get whether a command is a builtin
-func (cmd Command) IsBuiltin() bool {
+func IsBuiltin(cmd *commands.Command) bool {
 	for _, c := range strings.Split(Builtins, " ") {
 		if cmd.Cmd == c {
 			return true
@@ -59,25 +48,40 @@ func (cmd Command) IsBuiltin() bool {
 }
 
 // execute builtin command
-func ExecBuiltin(cmd *Command) (*ParserOutput, error) {
-	if !cmd.IsBuiltin() {
-		return nil, UnknownCommandError{*cmd}
+func ExecBuiltin(cmd *commands.Command, c *context.Context) (*ParserOutput, error) {
+	if !IsBuiltin(cmd) {
+		return nil, commands.UnknownCommandError{*cmd}
 	}
 	switch cmd.Cmd {
 	case "help":
-		return &ParserOutput{NilFlag, strings.Join(CommandList(), ", ")}, nil
+		if len(cmd.Args) > 0 {
+			arg := cmd.Args[0]
+			if IsBuiltin(&commands.Command{arg, nil}) {
+				return &ParserOutput{NilFlag, "Built-in: " + arg}, nil
+			} else if c.HasCommand(&commands.Command{arg, nil}) {
+				return &ParserOutput{NilFlag, c.CommandActions[arg].Help}, nil
+			} else {
+				return &ParserOutput{ErrFlag, "Unknown command: " + arg}, nil
+			}
+		}
+		helpStr := "Available commands: " + strings.Join(CommandList(), ", ") + strings.Join(c.CommandList(), ", ")
+		return &ParserOutput{NilFlag, helpStr}, nil
 	case "quit":
 		return &ParserOutput{QuitFlag, "Fare well."}, nil
 	}
 	return nil, nil
 }
 
-// prompts the user for a command
-func Parse(line string) *Command {
+// returns a command from a line
+func Parse(line string) *commands.Command {
 	sections := strings.Split(line, " ")
-	for i := range sections {
-		sections[i] = strings.Trim(sections[i], " ")
+	var args []string
+	for _, arg := range sections[1:] {
+		arg = strings.Trim(arg, " ")
+		if arg != "" {
+			args = append(args, arg)
+		}
 	}
-	cmd := &Command{sections[0], sections[1:]}
+	cmd := &commands.Command{sections[0], args}
 	return cmd
 }
