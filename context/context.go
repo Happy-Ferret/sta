@@ -6,7 +6,7 @@ import (
 
 // types
 type CommandAction struct {
-	Action func (args []string) string
+	Action func (c *Context, args []string) string
 	Help string
 }
 
@@ -21,7 +21,7 @@ func Default() *Context {
 	c.Name = "the palace"
 	c.CommandActions = make(map[string]CommandAction)
 	c.CommandActions["look"] = CommandAction{
-		func (args []string) string {
+		func (c *Context, args []string) string {
 			return "This is a wonderful palace."
 		},
 		"This command allows you to look around you."}
@@ -52,5 +52,5 @@ func (c *Context) ExecCommand(cmd *commands.Command) (string, error) {
 	if !c.HasCommand(cmd) {
 		return "", commands.UnknownCommandError{*cmd}
 	}
-	return c.CommandActions[cmd.Cmd].Action(cmd.Args), nil
+	return c.CommandActions[cmd.Cmd].Action(c, cmd.Args), nil
 }

@@ -7,8 +7,20 @@ import (
 )
 
 // builtin commands
-const (
-	Builtins = "quit help"
+var (
+	builtins = map[string]context.CommandAction {
+		"quit": context.CommandAction {
+			func (c *context.Context, args []string) string {
+				return "Fare well…"
+			},
+			"This command allows you to exit the game."},
+		"help": context.CommandAction {
+			func (c *context.Context, args []string) string {
+				return "help…"
+			},
+			"This command gives you the list of available command or help for a specific command.",
+		},
+	}
 )
 
 const (
@@ -22,24 +34,18 @@ type ParserOutput struct {
 	Message string
 }
 
-// get all possible commands for current context
+// get all builtin commands
 func CommandList() []string {
-	return strings.Split(Builtins, " ")
-}
-
-// get whether a command exists
-func Exists(cmd *commands.Command) bool {
-	for _, c := range CommandList() {
-		if cmd.Cmd == c {
-			return true
-		}
+	cmds := make([]string, 0, len(builtins))
+	for cmd := range builtins {
+		cmds = append(cmds, cmd)
 	}
-	return false
+	return cmds
 }
 
 // get whether a command is a builtin
 func IsBuiltin(cmd *commands.Command) bool {
-	for _, c := range strings.Split(Builtins, " ") {
+	for c := range builtins {
 		if cmd.Cmd == c {
 			return true
 		}
@@ -52,24 +58,25 @@ func ExecBuiltin(cmd *commands.Command, c *context.Context) (*ParserOutput, erro
 	if !IsBuiltin(cmd) {
 		return nil, commands.UnknownCommandError{*cmd}
 	}
-	switch cmd.Cmd {
-	case "help":
+	if (cmd.Cmd == "help") {
 		if len(cmd.Args) > 0 {
 			arg := cmd.Args[0]
 			if IsBuiltin(&commands.Command{arg, nil}) {
-				return &ParserOutput{NilFlag, "Built-in: " + arg}, nil
+				helpStr := "Built-in: " + builtins[arg].Help
+				return &ParserOutput{NilFlag, helpStr}, nil
 			} else if c.HasCommand(&commands.Command{arg, nil}) {
-				return &ParserOutput{NilFlag, c.CommandActions[arg].Help}, nil
+				helpStr := c.CommandActions[arg].Help
+				return &ParserOutput{NilFlag, helpStr}, nil
 			} else {
-				return &ParserOutput{ErrFlag, "Unknown command: " + arg}, nil
+				return nil, commands.UnknownCommandError{commands.Command{arg, nil}}
 			}
 		}
 		helpStr := "Available commands: " + strings.Join(CommandList(), ", ") + strings.Join(c.CommandList(), ", ")
 		return &ParserOutput{NilFlag, helpStr}, nil
-	case "quit":
-		return &ParserOutput{QuitFlag, "Fare well."}, nil
+	} else if IsBuiltin(cmd) {
+		return &ParserOutput{QuitFlag, builtins[cmd.Cmd].Action(c, cmd.Args)}, nil
 	}
-	return nil, nil
+	return nil, commands.UnknownCommandError{*cmd}
 }
 
 // returns a command from a line

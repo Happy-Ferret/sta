@@ -35,6 +35,8 @@ mainLoop:
 			out, err := parser.ExecBuiltin(cmd, c)
 			if err != nil {
 				fmt.Fprintf(w, err.Error()+"\n")
+				w.Flush()
+				continue
 			}
 			fmt.Fprintf(w, out.Message+"\n")
 			switch out.Flag {
