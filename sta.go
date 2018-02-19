@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/ribacq/sta/context"
+	"github.com/ribacq/sta/game"
 	"github.com/ribacq/sta/parser"
 	"os"
 	"strings"
@@ -15,13 +16,21 @@ func main() {
 	w := bufio.NewWriter(os.Stdout)
 
 	// creating context
-	c := context.Default()
+	hall := context.New("Palace hall")
+	hall.Description = "You are inside the hall of a palace. There is a door to the left."
+	kitchen := context.New("Kitchen")
+	kitchen.Description = "You are inside a shiny kitchen. There is a camembert on the table and a door to your right."
 
-	fmt.Fprintf(w, "Hello world!\n")
+	hall.AddLink(kitchen, "door")
+	kitchen.AddLink(hall, "door")
+
+	g := game.New("Jirsad", hall)
+	fmt.Fprintf(w, "Hello " + g.Name + "!\n\n")
+	fmt.Fprintf(w, g.Ct.Look() + "\n")
 	w.Flush()
 mainLoop:
 	for {
-		line, err := prompt(c, r, w)
+		line, err := prompt(g.Ct, r, w)
 		if err != nil {
 			return
 		}
@@ -32,7 +41,7 @@ mainLoop:
 			continue
 		} else if parser.IsBuiltin(cmd) {
 			// command is a builtin, call parser
-			out, err := parser.ExecBuiltin(cmd, c)
+			out, err := parser.ExecBuiltin(cmd, g.Ct)
 			if err != nil {
 				fmt.Fprintf(w, err.Error()+"\n")
 				w.Flush()
@@ -44,9 +53,12 @@ mainLoop:
 				w.Flush()
 				break mainLoop
 			}
-		} else if c.HasCommand(cmd) {
+		} else if _, err := g.Ct.GetLink(cmd.Cmd) ; err == nil {
+			g.UseLink(cmd.Cmd)
+			fmt.Fprintf(w, g.Ct.Look() + "\n")
+		} else if g.Ct.HasCommand(cmd) {
 			// command is from context
-			str, err := c.ExecCommand(cmd)
+			str, err := g.Ct.ExecCommand(cmd)
 			if err != nil {
 				fmt.Fprintf(w, err.Error()+"\n")
 				w.Flush()
@@ -63,7 +75,7 @@ mainLoop:
 
 //prompt user for a line
 func prompt(c *context.Context, r *bufio.Reader, w *bufio.Writer) (string, error) {
-	fmt.Fprintf(w, c.Name+" > ")
+	fmt.Fprintf(w, "\n" + c.Name+" > ")
 	err := w.Flush()
 	if err != nil {
 		return "", err

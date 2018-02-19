@@ -12,19 +12,23 @@ type CommandAction struct {
 
 type Context struct {
 	Name string
+	Description string
 	CommandActions map[string]CommandAction
+	Links []Link
 }
 
 // a default context
-func Default() *Context {
+func New(name string) *Context {
 	var c Context
-	c.Name = "the palace"
+	c.Name = name
+	c.Description = ""
 	c.CommandActions = make(map[string]CommandAction)
 	c.CommandActions["look"] = CommandAction{
 		func (c *Context, args []string) string {
-			return "This is a wonderful palace."
+			return c.Look()
 		},
-		"This command allows you to look around you."}
+		"This command allows you to look around you.",
+	}
 	return &c
 }
 
@@ -53,4 +57,13 @@ func (c *Context) ExecCommand(cmd *commands.Command) (string, error) {
 		return "", commands.UnknownCommandError{*cmd}
 	}
 	return c.CommandActions[cmd.Cmd].Action(c, cmd.Args), nil
+}
+
+// look command
+func (c *Context) Look() string {
+	lookStr := c.Description + "\nLinks:"
+	for _, l := range c.Links {
+		lookStr += " " + l.Name
+	}
+	return lookStr
 }
