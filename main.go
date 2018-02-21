@@ -7,7 +7,6 @@ import (
 	"github.com/ribacq/sta/games"
 	"github.com/ribacq/sta/parser"
 	"os"
-	"strings"
 )
 
 func main() {
@@ -23,12 +22,11 @@ func main() {
 
 	// Game variable with name, context, reader and writer
 	game := games.New("Jirsad", hall, bufio.NewReader(os.Stdin), bufio.NewWriter(os.Stdout))
-	fmt.Fprintf(game.Writer, "Hello "+game.Name+"!\n\n")
-	fmt.Fprintf(game.Writer, game.Context.Look()+"\n")
-	game.Writer.Flush()
+	game.Writeln("Hello" + game.Name)
+	game.Writeln("\n" + game.Context.Look())
 mainLoop:
 	for {
-		line, err := prompt(game)
+		line, err := game.Prompt()
 		if err != nil {
 			return
 		}
@@ -41,51 +39,28 @@ mainLoop:
 			// command is a builtin, call parser
 			out, err := parser.ExecBuiltin(cmd, game.Context)
 			if err != nil {
-				fmt.Fprintf(game.Writer, err.Error()+"\n")
-				game.Writer.Flush()
+				game.Writeln(err.Error())
 				continue
 			}
-			fmt.Fprintf(game.Writer, out.Message+"\n")
+			game.Writeln(out.Message)
 			switch out.Flag {
 			case parser.QuitFlag:
-				game.Writer.Flush()
 				break mainLoop
 			}
 		} else if _, err := game.Context.GetLink(cmd.Cmd); err == nil {
 			game.UseLink(cmd.Cmd)
-			fmt.Fprintf(game.Writer, game.Context.Look()+"\n")
+			game.Writeln(game.Context.Look())
 		} else if game.Context.HasCommand(cmd) {
 			// command is from context
 			str, err := game.Context.ExecCommand(cmd)
 			if err != nil {
-				fmt.Fprintf(game.Writer, err.Error()+"\n")
-				game.Writer.Flush()
+				game.Writeln(err.Error())
 				continue
 			}
-			fmt.Fprintf(game.Writer, str+"\n")
+			game.Writeln(str)
 		} else {
 			// other, command does not exist
-			fmt.Fprintf(game.Writer, "Unknown command: %v %q\n", cmd.Cmd, cmd.Args)
+			game.Writeln(fmt.Sprintf("Unknown command: %v %q\n", cmd.Cmd, cmd.Args))
 		}
-		game.Writer.Flush()
 	}
-}
-
-// prompt user for a line
-func prompt(game *games.Game) (string, error) {
-	fmt.Fprintf(game.Writer, "\n"+game.Context.Name+" > ")
-	err := game.Writer.Flush()
-	if err != nil {
-		return "", err
-	}
-	line, err := game.Reader.ReadString('\n')
-	if err != nil {
-		return "", err
-	}
-	fmt.Fprintf(game.Writer, "\n")
-	err = game.Writer.Flush()
-	if err != nil {
-		return "", err
-	}
-	return strings.Trim(line, " \n"), nil
 }
