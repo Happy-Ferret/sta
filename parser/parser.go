@@ -60,18 +60,26 @@ func ExecBuiltin(cmd *commands.Command, c *context.Context) (*ParserOutput, erro
 	}
 	if (cmd.Cmd == "help") {
 		if len(cmd.Args) > 0 {
+			// we ask for help on a specific command
 			arg := cmd.Args[0]
 			if IsBuiltin(&commands.Command{arg, nil}) {
-				helpStr := "Built-in: " + builtins[arg].Help
+				// help on a built-in
+				helpStr := builtins[arg].Help + " (built-in command)"
 				return &ParserOutput{NilFlag, helpStr}, nil
 			} else if c.HasCommand(&commands.Command{arg, nil}) {
+				// help on a context command
 				helpStr := c.CommandActions[arg].Help
 				return &ParserOutput{NilFlag, helpStr}, nil
 			} else {
+				// help on a command that does not exist
 				return nil, commands.UnknownCommandError{commands.Command{arg, nil}}
 			}
 		}
+		// just list all existing commands
 		helpStr := "Available commands: " + strings.Join(CommandList(), ", ") + strings.Join(c.CommandList(), ", ")
+		for _, l := range c.Links {
+			helpStr += ", " + l.Name
+		}
 		return &ParserOutput{NilFlag, helpStr}, nil
 	} else if IsBuiltin(cmd) {
 		return &ParserOutput{QuitFlag, builtins[cmd.Cmd].Action(c, cmd.Args)}, nil
