@@ -23,8 +23,8 @@ func main() {
 
 	// Game variable with name, context, reader and writer
 	game := games.New("Jirsad", hall, bufio.NewReader(os.Stdin), bufio.NewWriter(os.Stdout))
-	fmt.Fprintf(game.Writer, "Hello " + game.Name + "!\n\n")
-	fmt.Fprintf(game.Writer, game.Context.Look() + "\n")
+	fmt.Fprintf(game.Writer, "Hello "+game.Name+"!\n\n")
+	fmt.Fprintf(game.Writer, game.Context.Look()+"\n")
 	game.Writer.Flush()
 mainLoop:
 	for {
@@ -51,9 +51,9 @@ mainLoop:
 				game.Writer.Flush()
 				break mainLoop
 			}
-		} else if _, err := game.Context.GetLink(cmd.Cmd) ; err == nil {
+		} else if _, err := game.Context.GetLink(cmd.Cmd); err == nil {
 			game.UseLink(cmd.Cmd)
-			fmt.Fprintf(game.Writer, game.Context.Look() + "\n")
+			fmt.Fprintf(game.Writer, game.Context.Look()+"\n")
 		} else if game.Context.HasCommand(cmd) {
 			// command is from context
 			str, err := game.Context.ExecCommand(cmd)
@@ -71,9 +71,9 @@ mainLoop:
 	}
 }
 
-//prompt user for a line
+// prompt user for a line
 func prompt(game *games.Game) (string, error) {
-	fmt.Fprintf(game.Writer, "\n" + game.Context.Name+" > ")
+	fmt.Fprintf(game.Writer, "\n"+game.Context.Name+" > ")
 	err := game.Writer.Flush()
 	if err != nil {
 		return "", err

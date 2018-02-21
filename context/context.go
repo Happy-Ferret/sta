@@ -4,27 +4,28 @@ import (
 	"github.com/ribacq/sta/commands"
 )
 
-// types
+// CommandAction regroups a function with a help string for a command
 type CommandAction struct {
-	Action func (c *Context, args []string) string
-	Help string
+	Action func(c *Context, args []string) string
+	Help   string
 }
 
+// Context is the type representing the current player’s position
 type Context struct {
-	Name string
-	Description string
+	Name           string
+	Description    string
 	CommandActions map[string]CommandAction
-	Links []Link
+	Links          []Link
 }
 
-// a default context
+// New returns a default context
 func New(name string) *Context {
 	var c Context
 	c.Name = name
 	c.Description = ""
 	c.CommandActions = make(map[string]CommandAction)
 	c.CommandActions["look"] = CommandAction{
-		func (c *Context, args []string) string {
+		func(c *Context, args []string) string {
 			return c.Look()
 		},
 		"This command allows you to look around you.",
@@ -32,7 +33,7 @@ func New(name string) *Context {
 	return &c
 }
 
-// extracts the command list from the CommandActions map
+// CommandList extracts the command list from the CommandActions map
 func (c *Context) CommandList() []string {
 	cmds := make([]string, len(c.CommandActions))
 	for str := range c.CommandActions {
@@ -41,9 +42,9 @@ func (c *Context) CommandList() []string {
 	return cmds
 }
 
-// whether the command exists in given context
+// HasCommand gets whether the command exists in given context
 func (c *Context) HasCommand(cmd *commands.Command) bool {
-	for str, _ := range c.CommandActions {
+	for str := range c.CommandActions {
 		if cmd.Cmd == str {
 			return true
 		}
@@ -51,7 +52,7 @@ func (c *Context) HasCommand(cmd *commands.Command) bool {
 	return false
 }
 
-// execute a command
+// ExecCommand executes a command of the Context
 func (c *Context) ExecCommand(cmd *commands.Command) (string, error) {
 	if !c.HasCommand(cmd) {
 		return "", commands.UnknownCommandError{*cmd}
@@ -59,7 +60,7 @@ func (c *Context) ExecCommand(cmd *commands.Command) (string, error) {
 	return c.CommandActions[cmd.Cmd].Action(c, cmd.Args), nil
 }
 
-// look command
+// Look command gives a description of the context and available un-hidden links
 func (c *Context) Look() string {
 	lookStr := c.Description + "\nLinks:"
 	for _, l := range c.Links {

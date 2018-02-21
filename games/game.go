@@ -5,20 +5,20 @@ import (
 	"github.com/ribacq/sta/context"
 )
 
-// type Game with name of player and current context
+// Game type with name of player and current context
 type Game struct {
-	Name string
+	Name    string
 	Context *context.Context
-	Reader *bufio.Reader
-	Writer *bufio.Writer
+	Reader  *bufio.Reader
+	Writer  *bufio.Writer
 }
 
-// returns a new game with given player name and current context
+// New returns a new game with given player name and current context
 func New(name string, context *context.Context, reader *bufio.Reader, writer *bufio.Writer) *Game {
 	return &Game{name, context, reader, writer}
 }
 
-// change current context using link with given name in current context
+// UseLink change current context using link with given name in current context
 func (g *Game) UseLink(name string) error {
 	l, err := g.Context.GetLink(name)
 	if err != nil {
