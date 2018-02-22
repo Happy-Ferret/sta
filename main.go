@@ -18,15 +18,15 @@ func main() {
 	kitchen.Description = "You are inside a shiny kitchen. There is a camembert on the table and a door to your right."
 	camembert := context.New("Camembert")
 	camembert.Description = "This is the most beautiful piece of dairy you’ve ever seen…"
+	camembert.MakeTakeable()
 
-	hall.AddLink(kitchen, "door")
-	kitchen.AddLink(hall, "door")
-	kitchen.AddLink(camembert, "camembert")
-	camembert.AddLink(kitchen, "kitchen")
+	context.AddDoubleLink(hall, kitchen, "door", "")
+	kitchen.AddLink(camembert, "camembert", "")
+	camembert.AddLink(kitchen, "kitchen", "")
 
 	// Game variable with name, context, reader and writer
 	game := games.New("Jirsad", hall, bufio.NewReader(os.Stdin), bufio.NewWriter(os.Stdout))
-	game.Writeln("Hello" + game.Name)
+	game.Writeln("Hello " + game.Name + "!")
 	game.Writeln("\n" + game.Context.Look())
 mainLoop:
 	for {
@@ -56,7 +56,7 @@ mainLoop:
 			game.Writeln(game.Context.Look())
 		} else if game.Context.HasCommand(cmd) {
 			// command is from context
-			str, err := game.Context.ExecCommand(cmd)
+			str, err := game.ExecCommand(cmd)
 			if err != nil {
 				game.Writeln(err.Error())
 				continue

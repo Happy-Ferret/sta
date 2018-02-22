@@ -23,7 +23,7 @@ var (
 	}
 )
 
-// enumeratinon of flags used in ParserOutput
+// enumeratinon of flags used in Output
 const (
 	NilFlag = iota
 	QuitFlag
