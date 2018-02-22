@@ -16,9 +16,13 @@ func main() {
 	hall.Description = "You are inside the hall of a palace. There is a door to the left."
 	kitchen := context.New("Kitchen")
 	kitchen.Description = "You are inside a shiny kitchen. There is a camembert on the table and a door to your right."
+	camembert := context.New("Camembert")
+	camembert.Description = "This is the most beautiful piece of dairy you’ve ever seen…"
 
 	hall.AddLink(kitchen, "door")
 	kitchen.AddLink(hall, "door")
+	kitchen.AddLink(camembert, "camembert")
+	camembert.AddLink(kitchen, "kitchen")
 
 	// Game variable with name, context, reader and writer
 	game := games.New("Jirsad", hall, bufio.NewReader(os.Stdin), bufio.NewWriter(os.Stdout))
