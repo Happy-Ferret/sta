@@ -8,13 +8,19 @@ import (
 type Link struct {
 	Name   string
 	locked bool
-	key    string
+	Key    string
 	target *Context
 }
 
 // AddLink adds a new link to a context
-func (c *Context) AddLink(target *Context, name string) {
-	c.Links = append(c.Links, Link{name, false, "", target})
+func (c *Context) AddLink(target *Context, name string, key string) {
+	c.Links = append(c.Links, Link{name, key != "", key, target})
+}
+
+// AddDoubleLink adds links a->b and b->a
+func AddDoubleLink(ctx1 *Context, ctx2 *Context, name string, key string) {
+	ctx1.AddLink(ctx2, name, key)
+	ctx2.AddLink(ctx1, name, key)
 }
 
 // GetLink returns a link from the context by name, or an error if no such link exists
@@ -37,21 +43,16 @@ func (l *Link) GetTarget() *Context {
 	return l.target
 }
 
-// SetKey sets the key to given string for a lock
-func (l *Link) SetKey(key string) {
-	l.key = key
-}
-
 // Lock locks a link if the key is correct
 func (l *Link) Lock(key string) {
-	if key == l.key {
+	if key == l.Key {
 		l.locked = true
 	}
 }
 
 // Unlock unlocks a link if the key is correct
 func (l *Link) Unlock(key string) {
-	if key == l.key {
+	if key == l.Key {
 		l.locked = false
 	}
 }
