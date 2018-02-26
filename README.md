@@ -13,7 +13,7 @@ ssh-keygen -C 'sta' -f $(go env GOPATH)/src/github.com/ribacq/sta/id_rsa -P ''
 go install github.com/ribacq/sta
 ```
 
-# Running
+## Running
 Launch the server in a first terminal:
 ```bash
 sta
