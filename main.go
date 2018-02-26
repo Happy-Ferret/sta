@@ -1,3 +1,7 @@
+/*
+Package main is the entry point for sta.
+The main function lauches an SSH server listening on localhost:2222.
+*/
 package main
 
 import (

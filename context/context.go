@@ -1,3 +1,6 @@
+/*
+Package context provides type Context which represents a container for a lookable room or item.
+*/
 package context
 
 import (
