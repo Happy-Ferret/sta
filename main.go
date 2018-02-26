@@ -6,36 +6,22 @@ package main
 
 import (
 	"github.com/gliderlabs/ssh"
-	"github.com/ribacq/sta/context"
+	"github.com/ribacq/sta/db"
 	"github.com/ribacq/sta/games"
 	"golang.org/x/crypto/ssh/terminal"
 	"log"
-	"strings"
 )
 
 func gameHandler(sess ssh.Session) {
-	// default rooms
-	// TODO: use a database
-	hall := context.New("Palace hall")
-	hall.Description = "You are inside the hall of a palace. There is a door to the left."
-	kitchen := context.New("Kitchen")
-	kitchen.Description = "You are inside a shiny kitchen. There is a camembert on the table and a door to your right."
-	camembert := context.New("Camembert")
-	camembert.Description = "This is the most beautiful piece of dairy you’ve ever seen…"
-	camembert.MakeTakeable()
-
-	context.AddDoubleLink(hall, kitchen, "door", "")
-	kitchen.AddLink(camembert, "camembert", "")
-	camembert.AddLink(kitchen, "kitchen", "")
-
 	// Game variable with name, context
 	term := terminal.NewTerminal(sess, "> ")
-	game := games.New(sess.User(), hall)
-	term.Write([]byte("Hello "))
-	term.Write(term.Escape.Red)
-	term.Write([]byte(game.Name))
-	term.Write(term.Escape.Reset)
-	term.Write([]byte("!\n"))
+	game := games.New(sess.User(), db.Entrance())
+	term.Write([]byte("Hello " + game.Player.Name + "!\n"))
+	out, err := game.Exec("look")
+	if err != nil {
+		return
+	}
+	term.Write([]byte("\n" + out + "\n\n"))
 	for !game.Quit() {
 		term.SetPrompt(game.Context.Name + " > ")
 		line, err := term.ReadLine()
@@ -43,7 +29,7 @@ func gameHandler(sess ssh.Session) {
 			log.Fatal(err.Error())
 			return
 		}
-		out, err := game.Exec(strings.Split(line, " "))
+		out, err := game.Exec(line)
 		if err != nil {
 			term.Write([]byte("\n" + err.Error() + "\n\n"))
 		} else {

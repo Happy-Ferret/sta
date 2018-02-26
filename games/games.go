@@ -13,9 +13,8 @@ type commandFunc func(g *Game, cmd []string) (out string, err error)
 
 // Game type with name of player and current context
 type Game struct {
-	Name           string
+	Player         *context.Context
 	Context        *context.Context
-	Bag            []*context.Context
 	commandActions map[string]commandFunc
 	quit           bool
 }
@@ -23,11 +22,12 @@ type Game struct {
 // New returns a new game with given player name, current context and an empty bag.
 func New(name string, ctx *context.Context) *Game {
 	game := &Game{
-		Name:    name,
+		Player:  context.NewPlayer(name),
 		Context: ctx,
 		commandActions: map[string]commandFunc{
-			"help": helpCF,
-			"quit": quitCF,
+			"help": help,
+			"quit": quit,
+			"me":   me,
 		},
 		quit: false,
 	}
@@ -39,17 +39,32 @@ func (g Game) Quit() bool {
 	return g.quit
 }
 
-// ExecCommand executes a command provided as an array of strings.
-func (g *Game) Exec(cmd []string) (out string, err error) {
-	if l, err := g.Context.GetLink(cmd[0]); err == nil {
-		g.Context = l.Target()
-		return context.Look(g.Context, cmd)
-	} else if g.Context.HasCommand(cmd[0]) {
-		return g.Context.Exec(cmd)
-	} else if g.HasCommand(cmd[0]) {
-		return g.commandActions[cmd[0]](g, cmd)
+// ExecCommand executes a command provided as a string.
+func (g *Game) Exec(cmd string) (out string, err error) {
+	// first we’ll remove any excessive blank space
+	cmd = strings.TrimSpace(cmd)
+	// then we’ll push seperate non blank args into a slice
+	var args []string
+	for _, arg := range strings.Split(cmd, " ") {
+		if arg != "" {
+			args = append(args, arg)
+		}
 	}
-	return "", errors.New("Command " + cmd[0] + " does not exist.")
+
+	// now let’s execute the command
+	if l, err := g.Context.GetLink(args[0]); err == nil {
+		// link to another content
+		g.Context = l.Target()
+		return context.Look(g.Context, g.Player, args)
+	} else if g.Context.HasCommand(args[0]) {
+		// context command
+		return g.Context.Exec(g.Player, args)
+	} else if g.HasCommand(args[0]) {
+		// game command
+		return g.commandActions[args[0]](g, args)
+	}
+	// error: command not found
+	return "", errors.New("Command ‘" + args[0] + "’ is not allowed.")
 }
 
 // HasCommand returns whether a command exists in the Game variable.
@@ -60,23 +75,4 @@ func (g *Game) HasCommand(cmd string) bool {
 		}
 	}
 	return false
-}
-
-// Take places context in bag
-func (g *Game) Take(ctx *context.Context) {
-	if ctx == nil {
-		return
-	}
-
-	ctx.Container = g.Context
-	g.Bag = append(g.Bag, ctx)
-}
-
-// ShowBag describes bag content
-func (g *Game) ShowBag() string {
-	bagNames := make([]string, len(g.Bag))
-	for _, ctx := range g.Bag {
-		bagNames = append(bagNames, ctx.Name)
-	}
-	return "Bag: " + strings.Join(bagNames, ", ")
 }
