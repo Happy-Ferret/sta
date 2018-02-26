@@ -6,6 +6,7 @@ package games
 import (
 	"errors"
 	"github.com/ribacq/sta/context"
+	"regexp"
 	"strings"
 )
 
@@ -15,7 +16,7 @@ type commandFunc func(g *Game, cmd []string) (out string, err error)
 type Game struct {
 	Player         *context.Context
 	Context        *context.Context
-	commandActions map[string]commandFunc
+	CommandActions map[string]commandFunc
 	quit           bool
 }
 
@@ -24,7 +25,7 @@ func New(name string, ctx *context.Context) *Game {
 	game := &Game{
 		Player:  context.NewPlayer(name),
 		Context: ctx,
-		commandActions: map[string]commandFunc{
+		CommandActions: map[string]commandFunc{
 			"help": help,
 			"quit": quit,
 			"me":   me,
@@ -43,6 +44,12 @@ func (g Game) Quit() bool {
 func (g *Game) Exec(cmd string) (out string, err error) {
 	// first we’ll remove any excessive blank space
 	cmd = strings.TrimSpace(cmd)
+
+	// exit on empty command
+	if len(cmd) == 0 {
+		return "", nil
+	}
+
 	// then we’ll push seperate non blank args into a slice
 	var args []string
 	for _, arg := range strings.Split(cmd, " ") {
@@ -54,25 +61,28 @@ func (g *Game) Exec(cmd string) (out string, err error) {
 	// now let’s execute the command
 	if l, err := g.Context.GetLink(args[0]); err == nil {
 		// link to another content
-		g.Context = l.Target()
-		return context.Look(g.Context, g.Player, args)
-	} else if g.Context.HasCommand(args[0]) {
+		if target, ok := l.Try(g.Player); ok {
+			g.Context = target
+			return context.Look(g.Context, g.Player, args)
+		}
+		return "", errors.New("You do not have the required key.")
+	} else if _, ok := g.Context.HasCommand(args[0]); ok {
 		// context command
 		return g.Context.Exec(g.Player, args)
-	} else if g.HasCommand(args[0]) {
+	} else if command, ok := g.HasCommand(args[0]); ok {
 		// game command
-		return g.commandActions[args[0]](g, args)
+		return g.CommandActions[command](g, args)
 	}
 	// error: command not found
 	return "", errors.New("Command ‘" + args[0] + "’ is not allowed.")
 }
 
 // HasCommand returns whether a command exists in the Game variable.
-func (g *Game) HasCommand(cmd string) bool {
-	for str := range g.commandActions {
-		if cmd == str {
-			return true
+func (g *Game) HasCommand(cmd string) (command string, ok bool) {
+	for command := range g.CommandActions {
+		if matched, err := regexp.Match("^"+cmd+".*$", []byte(command)); err == nil && matched {
+			return command, true
 		}
 	}
-	return false
+	return "", false
 }

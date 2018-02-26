@@ -2,15 +2,48 @@ package games
 
 import (
 	"github.com/ribacq/sta/context"
+	"strings"
 )
 
 func help(g *Game, cmd []string) (out string, err error) {
-	return "help...", nil
+	// err is always nil
+
+	// if help is asked on a specific topic
+	if len(cmd) > 1 {
+		out = "Help on ‘" + strings.Join(cmd[1:], " ") + "’."
+		return
+	}
+
+	// print all available commands
+	out = "Available commands: "
+	i := 0
+	for cmd := range g.CommandActions {
+		if i > 0 {
+			out += ", "
+		}
+		i++
+		out += cmd
+	}
+	for cmd := range g.Context.CommandActions {
+		if i > 0 {
+			out += ", "
+		}
+		i++
+		out += cmd
+	}
+	for _, l := range g.Context.Links {
+		if i > 0 {
+			out += ", "
+		}
+		i++
+		out += l.Name
+	}
+	return
 }
 
 func quit(g *Game, cmd []string) (out string, err error) {
 	g.quit = true
-	return "quit...", nil
+	return "Fare well...", nil
 }
 
 func me(g *Game, cmd []string) (out string, err error) {

@@ -13,6 +13,7 @@ import (
 )
 
 func gameHandler(sess ssh.Session) {
+	log.Println(sess.User() + " connected.")
 	// Game variable with name, context
 	term := terminal.NewTerminal(sess, "> ")
 	game := games.New(sess.User(), db.Entrance())
@@ -26,16 +27,17 @@ func gameHandler(sess ssh.Session) {
 		term.SetPrompt(game.Context.Name + " > ")
 		line, err := term.ReadLine()
 		if err != nil {
-			log.Fatal(err.Error())
+			log.Println(err.Error())
 			return
 		}
 		out, err := game.Exec(line)
 		if err != nil {
 			term.Write([]byte("\n" + err.Error() + "\n\n"))
-		} else {
+		} else if len(out) > 0 {
 			term.Write([]byte("\n" + out + "\n\n"))
 		}
 	}
+	log.Println(game.Player.Name + " disconnected.")
 }
 
 func main() {

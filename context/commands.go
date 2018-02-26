@@ -43,6 +43,9 @@ func Look(c *Context, player *Context, cmd []string) (out string, err error) {
 // Take puts an item into player’s bag.
 func Take(from *Context, to *Context, cmd []string) (out string, err error) {
 	if i, ctx, ok := from.Pick(strings.Join(cmd[1:], " ")); ok {
+		if val, ok := ctx.Properties["takeable"].(bool); ok && !val {
+			return "You cannot take " + ctx.Name + ".", nil
+		}
 		from.Contents = append(from.Contents[0:i], from.Contents[i+1:]...)
 		to.Contents = append(to.Contents, ctx)
 		ctx.Container = to
