@@ -39,7 +39,7 @@ func (l *Link) IsLocked() bool {
 }
 
 // GetTarget returns the target of a link
-func (l *Link) GetTarget() *Context {
+func (l *Link) Target() *Context {
 	return l.target
 }
 

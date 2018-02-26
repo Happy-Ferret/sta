@@ -1,13 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"github.com/gliderlabs/ssh"
 	"github.com/ribacq/sta/context"
 	"github.com/ribacq/sta/games"
-	"github.com/ribacq/sta/parser"
 	"golang.org/x/crypto/ssh/terminal"
 	"log"
+	"strings"
 )
 
 func gameHandler(sess ssh.Session) {
@@ -25,48 +24,26 @@ func gameHandler(sess ssh.Session) {
 	kitchen.AddLink(camembert, "camembert", "")
 	camembert.AddLink(kitchen, "kitchen", "")
 
-	// Game variable with name, context, reader and writer
+	// Game variable with name, context
 	term := terminal.NewTerminal(sess, "> ")
-	game := games.New(sess.User(), hall, term)
-	game.WriteString("Hello " + game.Name + "\n")
-	game.WriteString("\n" + game.Context.Look() + "\n")
-mainLoop:
-	for {
-		line, err := game.Prompt()
+	game := games.New(sess.User(), hall)
+	term.Write([]byte("Hello "))
+	term.Write(term.Escape.Red)
+	term.Write([]byte(game.Name))
+	term.Write(term.Escape.Reset)
+	term.Write([]byte("!\n"))
+	for !game.Quit() {
+		term.SetPrompt(game.Context.Name + " > ")
+		line, err := term.ReadLine()
 		if err != nil {
+			log.Fatal(err.Error())
 			return
 		}
-		cmd := parser.Parse(line)
-
-		if cmd.Cmd == "" {
-			// command was nothing, skip
-			continue
-		} else if parser.IsBuiltin(cmd) {
-			// command is a builtin, call parser
-			out, err := parser.ExecBuiltin(cmd, game.Context)
-			if err != nil {
-				game.WriteString(err.Error())
-				continue
-			}
-			game.WriteString(out.Message + "\n")
-			switch out.Flag {
-			case parser.QuitFlag:
-				break mainLoop
-			}
-		} else if _, err := game.Context.GetLink(cmd.Cmd); err == nil {
-			game.UseLink(cmd.Cmd)
-			game.WriteString(game.Context.Look() + "\n")
-		} else if game.Context.HasCommand(cmd) {
-			// command is from context
-			str, err := game.ExecCommand(cmd)
-			if err != nil {
-				game.WriteString(err.Error())
-				continue
-			}
-			game.WriteString(str + "\n")
+		out, err := game.Exec(strings.Split(line, " "))
+		if err != nil {
+			term.Write([]byte("\n" + err.Error() + "\n\n"))
 		} else {
-			// other, command does not exist
-			game.WriteString(fmt.Sprintf("Unknown command: %v %q\n", cmd.Cmd, cmd.Args) + "\n")
+			term.Write([]byte("\n" + out + "\n\n"))
 		}
 	}
 }
