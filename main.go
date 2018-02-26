@@ -1,15 +1,16 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
+	"github.com/gliderlabs/ssh"
 	"github.com/ribacq/sta/context"
 	"github.com/ribacq/sta/games"
 	"github.com/ribacq/sta/parser"
-	"os"
+	"golang.org/x/crypto/ssh/terminal"
+	"log"
 )
 
-func main() {
+func gameHandler(sess ssh.Session) {
 	// default rooms
 	// TODO: use a database
 	hall := context.New("Palace hall")
@@ -21,9 +22,10 @@ func main() {
 	kitchen.AddLink(hall, "door")
 
 	// Game variable with name, context, reader and writer
-	game := games.New("Jirsad", hall, bufio.NewReader(os.Stdin), bufio.NewWriter(os.Stdout))
-	game.Writeln("Hello" + game.Name)
-	game.Writeln("\n" + game.Context.Look())
+	term := terminal.NewTerminal(sess, "> ")
+	game := games.New(sess.User(), hall, term)
+	game.WriteString("Hello " + game.Name + "\n")
+	game.WriteString("\n" + game.Context.Look() + "\n")
 mainLoop:
 	for {
 		line, err := game.Prompt()
@@ -39,28 +41,33 @@ mainLoop:
 			// command is a builtin, call parser
 			out, err := parser.ExecBuiltin(cmd, game.Context)
 			if err != nil {
-				game.Writeln(err.Error())
+				game.WriteString(err.Error())
 				continue
 			}
-			game.Writeln(out.Message)
+			game.WriteString(out.Message + "\n")
 			switch out.Flag {
 			case parser.QuitFlag:
 				break mainLoop
 			}
 		} else if _, err := game.Context.GetLink(cmd.Cmd); err == nil {
 			game.UseLink(cmd.Cmd)
-			game.Writeln(game.Context.Look())
+			game.WriteString(game.Context.Look() + "\n")
 		} else if game.Context.HasCommand(cmd) {
 			// command is from context
 			str, err := game.Context.ExecCommand(cmd)
 			if err != nil {
-				game.Writeln(err.Error())
+				game.WriteString(err.Error())
 				continue
 			}
-			game.Writeln(str)
+			game.WriteString(str + "\n")
 		} else {
 			// other, command does not exist
-			game.Writeln(fmt.Sprintf("Unknown command: %v %q\n", cmd.Cmd, cmd.Args))
+			game.WriteString(fmt.Sprintf("Unknown command: %v %q\n", cmd.Cmd, cmd.Args) + "\n")
 		}
 	}
+}
+
+func main() {
+	log.Println("server started")
+	log.Fatal(ssh.ListenAndServe(":2222", gameHandler, ssh.HostKeyFile("./id_rsa")))
 }

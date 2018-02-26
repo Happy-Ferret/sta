@@ -4,3 +4,6 @@
 *.swp
 *.lof
 sta
+vendor
+id_rsa
+id_rsa.pub
