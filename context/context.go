@@ -17,7 +17,7 @@ type Context struct {
 	Container      *Context
 	Contents       []*Context
 	Links          []Link
-	Properties     map[string]interface{}
+	Properties     map[string]string
 }
 
 // New returns a default context intialized with just a name and a look command.
@@ -25,12 +25,13 @@ func New(name string) *Context {
 	c := &Context{
 		Name: name,
 		CommandActions: map[string]commandFunc{
-			"look": Look,
-			"take": Take,
+			"look":   Look,
+			"take":   Take,
+			"lock":   Lock,
+			"unlock": Lock,
 		},
-		Properties: map[string]interface{}{
-			"lookable": true,
-			"takeable": false,
+		Properties: map[string]string{
+			"lookable": "lookable",
 		},
 	}
 	return c
@@ -73,10 +74,18 @@ func (c *Context) Pick(name string) (i int, ctx *Context, ok bool) {
 
 // MakeLookable allows or forbids command ‘look c’.
 func (c *Context) MakeLookable(val bool) {
-	c.Properties["lookable"] = val
+	if val {
+		c.Properties["lookable"] = "lookable"
+	} else {
+		delete(c.Properties, "lookable")
+	}
 }
 
 // MakeTakeable allows or forbids command ‘take c’
 func (c *Context) MakeTakeable(val bool) {
-	c.Properties["takeable"] = val
+	if val {
+		c.Properties["takeable"] = "takeable"
+	} else {
+		delete(c.Properties, "takeable")
+	}
 }

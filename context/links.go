@@ -26,17 +26,26 @@ func AddDoubleLink(ctx1 *Context, ctx2 *Context, name string, key string) {
 
 // GetLink returns a link from the context by name, or an error if no such link exists
 func (c *Context) GetLink(name string) (*Link, error) {
+	if name == "" {
+		return nil, errors.New("No name was given.")
+	}
+
 	for _, l := range c.Links {
 		if matched, err := regexp.Match("^"+name+".*$", []byte(l.Name)); err == nil && matched {
 			return &l, nil
 		}
 	}
-	return nil, errors.New("no such link")
+	return nil, errors.New("No such link.")
 }
 
-// IsLocked get whether a link is locked
+// IsLocked returns whether a link is locked
 func (l *Link) IsLocked() bool {
 	return l.locked
+}
+
+// HasKey returns whether the link requires a key
+func (l *Link) HasKey() bool {
+	return l.key != ""
 }
 
 // Try to pass through a link using a key in player Contents.
@@ -49,7 +58,7 @@ func (l *Link) Try(player *Context) (target *Context, ok bool) {
 
 	// link is locked: look for a key in player.Contents
 	for _, ctx := range player.Contents {
-		if val, ok := ctx.Properties["key"].(string); ok && val == l.key {
+		if val, ok := ctx.Properties["key"]; ok && val == l.key {
 			return l.target, true
 		}
 	}
