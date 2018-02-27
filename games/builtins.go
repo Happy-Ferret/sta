@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+type commandFunc func(g *Game, cmd []string) (out string, err error)
+
 func help(g *Game, cmd []string) (out string, err error) {
 	// err is always nil
 

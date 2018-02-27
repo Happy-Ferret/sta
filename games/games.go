@@ -10,8 +10,6 @@ import (
 	"strings"
 )
 
-type commandFunc func(g *Game, cmd []string) (out string, err error)
-
 // Game type with name of player and current context
 type Game struct {
 	Player   *context.Context
@@ -22,8 +20,9 @@ type Game struct {
 
 // New returns a new game with given player name, current context and an empty bag.
 func New(name string, ctx *context.Context) *Game {
-	game := &Game{
-		Player:  context.NewPlayer(name),
+	player := context.NewPlayer(name)
+	g := &Game{
+		Player:  player,
 		Context: ctx,
 		Commands: map[string]commandFunc{
 			"help": help,
@@ -32,7 +31,8 @@ func New(name string, ctx *context.Context) *Game {
 		},
 		quit: false,
 	}
-	return game
+	g.Context.Contents = append(g.Context.Contents, player)
+	return g
 }
 
 // Quit returns if we want to quit the game
@@ -60,11 +60,18 @@ func (g *Game) Exec(cmd string) (out string, err error) {
 
 	// now let’s execute the command
 	if l, err := g.Context.GetLink(args[0]); err == nil {
-		// link to another content
+		// link to another context
 		if l.Locked() {
 			return "", errors.New("This is locked.")
 		}
+		for i, ctx := range g.Context.Contents {
+			if ctx == g.Player {
+				g.Context.Contents = append(g.Context.Contents[:i], g.Context.Contents[i+1:]...)
+				break
+			}
+		}
 		g.Context = l.Target()
+		g.Context.Contents = append(g.Context.Contents, g.Player)
 		return context.Look(g.Context, g.Player, args)
 	} else if _, ok := g.Context.HasCommand(args[0]); ok {
 		// context command

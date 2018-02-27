@@ -23,14 +23,8 @@ type Context struct {
 // New returns a default context intialized with just a name and a look command.
 func New(name string) *Context {
 	c := &Context{
-		Name: name,
-		Commands: map[string]CommandFunc{
-			"look":   Look,
-			"take":   Take,
-			"drop":   Take,
-			"lock":   Lock,
-			"unlock": Lock,
-		},
+		Name:     name,
+		Commands: commandFuncs,
 		Properties: map[string]string{
 			"lookable": "lookable",
 		},

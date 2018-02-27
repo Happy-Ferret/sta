@@ -28,7 +28,16 @@ func GetCommandFunc(cmd string) (f CommandFunc, ok bool) {
 
 // Look command gives a description of the context and available un-hidden links.
 func Look(c, player *Context, cmd []string) (out string, err error) {
-	// err is always nil.
+	// maybe look for something else than c
+	if len(cmd) > 1 {
+		_, ctx, ok := c.Pick(strings.Join(cmd[1:], " "))
+		if !ok {
+			return "", errors.New("No such thing here.")
+		} else {
+			return Look(ctx, player, []string{})
+		}
+	}
+
 	// display context description
 	out = c.Description
 
@@ -41,7 +50,11 @@ func Look(c, player *Context, cmd []string) (out string, err error) {
 			} else if i > 0 && i == len(c.Contents)-1 {
 				out += " and "
 			}
-			out += item.Name
+			if item == player {
+				out += "you"
+			} else {
+				out += item.Name
+			}
 		}
 		out += "."
 	}
@@ -117,8 +130,11 @@ func Lock(c, player *Context, cmd []string) (out string, err error) {
 				return
 			}
 
-			// lock or unlock
+			// lock or unlock l and its slaves
 			l.locked = action
+			for _, slave := range l.slaves {
+				slave.locked = action
+			}
 			if action {
 				out = l.Name() + " locked!"
 			} else {

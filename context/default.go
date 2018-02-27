@@ -29,6 +29,9 @@ func init() {
 	entrance.AddLink("north", "", false, corridor)
 	corridor.AddLink("south", "", false, entrance)
 	corridor.Contents = append(corridor.Contents, key, apple)
-	corridor.AddLink("north", "iron#0", true, temple)
-	temple.AddLink("south", "iron#0", true, corridor)
+
+	corToTemple := corridor.AddLink("north", "iron#0", true, temple)
+	templeToCor := temple.AddLink("south", "iron#0", true, corridor)
+	corToTemple.slaves = append(corToTemple.slaves, templeToCor)
+	templeToCor.slaves = append(templeToCor.slaves, corToTemple)
 }

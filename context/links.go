@@ -5,28 +5,25 @@ import (
 	"regexp"
 )
 
-// Link is a type for joining two contexts
+// Link is a type for joining two contexts.
 type Link struct {
 	name   string
 	key    string
 	locked bool
 	target *Context
+	slaves []*Link
 }
 
-// AddLink adds a new link to a context
-func (c *Context) AddLink(name, key string, locked bool, target *Context) {
-	c.Links = append(c.Links, &Link{
+// AddLink adds a new link to a context and returns it.
+func (c *Context) AddLink(name, key string, locked bool, target *Context) *Link {
+	l := &Link{
 		name:   name,
 		key:    key,
 		locked: locked,
 		target: target,
-	})
-}
-
-// AddDoubleLink adds links a->b and b->a
-func AddDoubleLink(name, key string, locked bool, ctx1 *Context, ctx2 *Context) {
-	ctx1.AddLink(name, key, locked, ctx2)
-	ctx2.AddLink(name, key, locked, ctx1)
+	}
+	c.Links = append(c.Links, l)
+	return l
 }
 
 // Name gets link name.
