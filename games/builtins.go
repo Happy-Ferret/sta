@@ -17,14 +17,14 @@ func help(g *Game, cmd []string) (out string, err error) {
 	// print all available commands
 	out = "Available commands: "
 	i := 0
-	for cmd := range g.CommandActions {
+	for cmd := range g.Commands {
 		if i > 0 {
 			out += ", "
 		}
 		i++
 		out += cmd
 	}
-	for cmd := range g.Context.CommandActions {
+	for cmd := range g.Context.Commands {
 		if i > 0 {
 			out += ", "
 		}
@@ -36,7 +36,7 @@ func help(g *Game, cmd []string) (out string, err error) {
 			out += ", "
 		}
 		i++
-		out += l.Name
+		out += l.Name()
 	}
 	return
 }

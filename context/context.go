@@ -11,22 +11,23 @@ import (
 
 // Context is the type representing the current player’s position
 type Context struct {
-	Name           string
-	Description    string
-	CommandActions map[string]commandFunc
-	Container      *Context
-	Contents       []*Context
-	Links          []Link
-	Properties     map[string]string
+	Name        string
+	Description string
+	Container   *Context
+	Contents    []*Context
+	Links       []*Link
+	Commands    map[string]CommandFunc
+	Properties  map[string]string
 }
 
 // New returns a default context intialized with just a name and a look command.
 func New(name string) *Context {
 	c := &Context{
 		Name: name,
-		CommandActions: map[string]commandFunc{
+		Commands: map[string]CommandFunc{
 			"look":   Look,
 			"take":   Take,
+			"drop":   Take,
 			"lock":   Lock,
 			"unlock": Lock,
 		},
@@ -40,14 +41,14 @@ func New(name string) *Context {
 // Exec executes a context command.
 func (c *Context) Exec(player *Context, args []string) (out string, err error) {
 	if command, ok := c.HasCommand(args[0]); ok {
-		return c.CommandActions[command](c, player, args)
+		return c.Commands[command](c, player, args)
 	}
 	return "", errors.New("c.Exec: no such command " + args[0])
 }
 
 // HasCommand gets whether the command exists in given context.
 func (c *Context) HasCommand(cmd string) (command string, ok bool) {
-	for command := range c.CommandActions {
+	for command := range c.Commands {
 		if matched, err := regexp.Match("^"+cmd+".*$", []byte(command)); err == nil && matched {
 			return command, true
 		}

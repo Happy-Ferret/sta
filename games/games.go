@@ -14,10 +14,10 @@ type commandFunc func(g *Game, cmd []string) (out string, err error)
 
 // Game type with name of player and current context
 type Game struct {
-	Player         *context.Context
-	Context        *context.Context
-	CommandActions map[string]commandFunc
-	quit           bool
+	Player   *context.Context
+	Context  *context.Context
+	Commands map[string]commandFunc
+	quit     bool
 }
 
 // New returns a new game with given player name, current context and an empty bag.
@@ -25,7 +25,7 @@ func New(name string, ctx *context.Context) *Game {
 	game := &Game{
 		Player:  context.NewPlayer(name),
 		Context: ctx,
-		CommandActions: map[string]commandFunc{
+		Commands: map[string]commandFunc{
 			"help": help,
 			"quit": quit,
 			"me":   me,
@@ -61,17 +61,17 @@ func (g *Game) Exec(cmd string) (out string, err error) {
 	// now let’s execute the command
 	if l, err := g.Context.GetLink(args[0]); err == nil {
 		// link to another content
-		if target, ok := l.Try(g.Player); ok {
-			g.Context = target
-			return context.Look(g.Context, g.Player, args)
+		if l.Locked() {
+			return "", errors.New("This is locked.")
 		}
-		return "", errors.New("You do not have the required key.")
+		g.Context = l.Target()
+		return context.Look(g.Context, g.Player, args)
 	} else if _, ok := g.Context.HasCommand(args[0]); ok {
 		// context command
 		return g.Context.Exec(g.Player, args)
 	} else if command, ok := g.HasCommand(args[0]); ok {
 		// game command
-		return g.CommandActions[command](g, args)
+		return g.Commands[command](g, args)
 	}
 	// error: command not found
 	return "", errors.New("Command ‘" + args[0] + "’ is not allowed.")
@@ -79,7 +79,7 @@ func (g *Game) Exec(cmd string) (out string, err error) {
 
 // HasCommand returns whether a command exists in the Game variable.
 func (g *Game) HasCommand(cmd string) (command string, ok bool) {
-	for command := range g.CommandActions {
+	for command := range g.Commands {
 		if matched, err := regexp.Match("^"+cmd+".*$", []byte(command)); err == nil && matched {
 			return command, true
 		}

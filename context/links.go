@@ -7,21 +7,46 @@ import (
 
 // Link is a type for joining two contexts
 type Link struct {
-	Name   string
-	locked bool
+	name   string
 	key    string
+	locked bool
 	target *Context
 }
 
 // AddLink adds a new link to a context
-func (c *Context) AddLink(target *Context, name string, key string) {
-	c.Links = append(c.Links, Link{name, key != "", key, target})
+func (c *Context) AddLink(name, key string, locked bool, target *Context) {
+	c.Links = append(c.Links, &Link{
+		name:   name,
+		key:    key,
+		locked: locked,
+		target: target,
+	})
 }
 
 // AddDoubleLink adds links a->b and b->a
-func AddDoubleLink(ctx1 *Context, ctx2 *Context, name string, key string) {
-	ctx1.AddLink(ctx2, name, key)
-	ctx2.AddLink(ctx1, name, key)
+func AddDoubleLink(name, key string, locked bool, ctx1 *Context, ctx2 *Context) {
+	ctx1.AddLink(name, key, locked, ctx2)
+	ctx2.AddLink(name, key, locked, ctx1)
+}
+
+// Name gets link name.
+func (l *Link) Name() string {
+	return l.name
+}
+
+// Locked returns whether a link is locked.
+func (l *Link) Locked() bool {
+	return l.locked
+}
+
+// HasKey returns whether the link requires a key.
+func (l *Link) HasKey() bool {
+	return l.key != ""
+}
+
+// Target returns target context after checking the key.
+func (l *Link) Target() *Context {
+	return l.target
 }
 
 // GetLink returns a link from the context by name, or an error if no such link exists
@@ -31,21 +56,11 @@ func (c *Context) GetLink(name string) (*Link, error) {
 	}
 
 	for _, l := range c.Links {
-		if matched, err := regexp.Match("^"+name+".*$", []byte(l.Name)); err == nil && matched {
-			return &l, nil
+		if matched, err := regexp.Match("^"+name+".*$", []byte(l.name)); err == nil && matched {
+			return l, nil
 		}
 	}
 	return nil, errors.New("No such link.")
-}
-
-// IsLocked returns whether a link is locked
-func (l *Link) IsLocked() bool {
-	return l.locked
-}
-
-// HasKey returns whether the link requires a key
-func (l *Link) HasKey() bool {
-	return l.key != ""
 }
 
 // Try to pass through a link using a key in player Contents.

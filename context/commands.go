@@ -6,7 +6,25 @@ import (
 	"strings"
 )
 
-type commandFunc func(c, player *Context, cmd []string) (out string, err error)
+var (
+	commandFuncs = map[string]CommandFunc{
+		"look":   Look,
+		"take":   Take,
+		"drop":   Take,
+		"lock":   Lock,
+		"unlock": Lock,
+	}
+)
+
+type CommandFunc func(c, player *Context, cmd []string) (out string, err error)
+
+// GetCommandFunc returns the function corresponding to the command.
+// The command name must be exact.
+// This function exists to protect commandFuncs from exterior modification.
+func GetCommandFunc(cmd string) (f CommandFunc, ok bool) {
+	f, ok = commandFuncs[cmd]
+	return
+}
 
 // Look command gives a description of the context and available un-hidden links.
 func Look(c, player *Context, cmd []string) (out string, err error) {
@@ -35,15 +53,25 @@ func Look(c, player *Context, cmd []string) (out string, err error) {
 			if i > 0 {
 				out += ", "
 			}
-			out += l.Name
+			out += l.Name()
+			if l.locked {
+				out += " (locked)"
+			}
 		}
 	}
 
 	return
 }
 
-// Take puts an item into player’s bag.
-func Take(from, to *Context, cmd []string) (out string, err error) {
+// Take puts an item into or out of the  player’s bag.
+func Take(c, player *Context, cmd []string) (out string, err error) {
+	// set to and from depending on calling command (default is take)
+	from, to := c, player
+	if matched, err := regexp.Match("^"+cmd[0]+".*", []byte("drop")); err == nil && matched {
+		from, to = to, from
+	}
+
+	// transfer the object
 	if i, ctx, ok := from.Pick(strings.Join(cmd[1:], " ")); ok {
 		if _, ok := ctx.Properties["takeable"]; !ok {
 			return "You cannot take " + ctx.Name + ".", nil
@@ -51,7 +79,7 @@ func Take(from, to *Context, cmd []string) (out string, err error) {
 		from.Contents = append(from.Contents[0:i], from.Contents[i+1:]...)
 		to.Contents = append(to.Contents, ctx)
 		ctx.Container = to
-		return "You take " + ctx.Name + " from " + from.Name + ".", nil
+		return ctx.Name + " --> " + to.Name, nil
 	}
 	return "", errors.New("There is no such thing here.")
 }
@@ -82,9 +110,9 @@ func Lock(c, player *Context, cmd []string) (out string, err error) {
 			// return if there is nothing to do
 			if l.locked == action {
 				if action {
-					out = l.Name + " is already locked."
+					out = l.Name() + " is already locked."
 				} else {
-					out = l.Name + " is already unlocked."
+					out = l.Name() + " is already unlocked."
 				}
 				return
 			}
@@ -92,9 +120,9 @@ func Lock(c, player *Context, cmd []string) (out string, err error) {
 			// lock or unlock
 			l.locked = action
 			if action {
-				out = l.Name + " locked!"
+				out = l.Name() + " locked!"
 			} else {
-				out = l.Name + " unlocked!"
+				out = l.Name() + " unlocked!"
 			}
 			return
 		}

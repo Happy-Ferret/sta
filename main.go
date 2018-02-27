@@ -6,7 +6,8 @@ package main
 
 import (
 	"github.com/gliderlabs/ssh"
-	"github.com/ribacq/sta/db"
+	"github.com/ribacq/sta/context"
+	//_ "github.com/ribacq/sta/db"
 	"github.com/ribacq/sta/games"
 	"golang.org/x/crypto/ssh/terminal"
 	"log"
@@ -16,7 +17,7 @@ func gameHandler(sess ssh.Session) {
 	log.Println(sess.User() + " connected.")
 	// Game variable with name, context
 	term := terminal.NewTerminal(sess, "> ")
-	game := games.New(sess.User(), db.Entrance())
+	game := games.New(sess.User(), context.Entrance())
 	term.Write([]byte("Hello " + game.Player.Name + "!\n"))
 	out, err := game.Exec("look")
 	if err != nil {
