@@ -10,6 +10,7 @@ import (
 	"github.com/ribacq/sta/games"
 	"golang.org/x/crypto/ssh/terminal"
 	"log"
+	"regexp"
 )
 
 // gameHandler treats an ssh session with one user.
@@ -23,6 +24,33 @@ func gameHandler(sess ssh.Session) {
 
 	// game with player name and first context
 	game := games.New(sess.User(), context.Entrance())
+
+	// autocompletion of commands
+	term.AutoCompleteCallback = func(line string, pos int, key rune) (newLine string, newPos int, ok bool) {
+		// only autocomplete on TAB
+		if key != '\t' {
+			return
+		}
+
+		found := false
+		for _, cmd := range game.AllCommands() {
+			if matched, err := regexp.Match("^"+line+".*", []byte(cmd)); err == nil && matched {
+				// if two commands at least match, do not complete
+				if found {
+					return "", 0, false
+				}
+				found = true
+				newLine = cmd + " "
+				newPos = len(cmd) + 1
+				ok = true
+			}
+		}
+		// If we get here and found is true, we found something and
+		// set the output variables; if nothing was found, the output
+		// variables are still nil.
+		// In both cases there is only one thing left to do:
+		return
+	}
 
 	// welcome message and look on context
 	term.Write([]byte("Welcome " + game.Player.Name + "!\n\n"))

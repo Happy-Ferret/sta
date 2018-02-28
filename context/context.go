@@ -55,16 +55,22 @@ func (c *Context) HasCommand(cmd string) (command string, ok bool) {
 // ctx the found *Context,
 // ok a boolean indicating whether the contex was found
 func (c *Context) Pick(name string) (i int, ctx *Context, ok bool) {
-	// looks through all of c.Contents if we find the rightly named context
+	// trim spaces and return on empty name
 	name = strings.TrimSpace(name)
+	if name == "" {
+		return
+	}
+
+	// looks through all of c.Contents if we find the rightly named context
 	for i, ctx := range c.Contents {
 		ok, err := regexp.Match(".*"+name+".*", []byte(ctx.Name))
 		if err == nil && ok {
 			return i, ctx, ok
 		}
 	}
+
 	// name was not found
-	return 0, nil, false
+	return
 }
 
 // MakeLookable allows or forbids command ‘look c’.

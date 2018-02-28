@@ -62,7 +62,7 @@ func (g *Game) Exec(cmd string) (out string, err error) {
 	if l, err := g.Context.GetLink(args[0]); err == nil {
 		// link to another context
 		if l.Locked() {
-			return "", errors.New("This is locked.")
+			return "", errors.New("You cannot go this way.")
 		}
 		for i, ctx := range g.Context.Contents {
 			if ctx == g.Player {
@@ -92,4 +92,18 @@ func (g *Game) HasCommand(cmd string) (command string, ok bool) {
 		}
 	}
 	return "", false
+}
+
+// AllCommands returns a slice of all currently accessible commands.
+func (g *Game) AllCommands() (cmds []string) {
+	for cmd := range g.Commands {
+		cmds = append(cmds, cmd)
+	}
+	for cmd := range g.Context.Commands {
+		cmds = append(cmds, cmd)
+	}
+	for _, l := range g.Context.Links {
+		cmds = append(cmds, l.Name())
+	}
+	return
 }

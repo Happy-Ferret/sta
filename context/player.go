@@ -1,11 +1,8 @@
 package context
 
-func NewPlayer(name string) *Context {
-	return &Context{
-		Name:        name,
-		Description: "A person called " + name + ".",
-		Commands:    map[string]CommandFunc{},
-		Contents:    []*Context{},
-		Properties:  map[string]string{},
-	}
+func NewPlayer(name string) (player *Context) {
+	player = New(name)
+	player.Description = "A person called " + name + "."
+	player.Properties["player"] = "player"
+	return
 }
