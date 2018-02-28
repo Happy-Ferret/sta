@@ -15,6 +15,21 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/jpillora/ansi"
+  packages = ["."]
+  revision = "f496b27cd669dffb23ce87577824f749f6a8dae9"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/lib/pq"
+  packages = [
+    ".",
+    "oid"
+  ]
+  revision = "88edab0803230a3898347e77b474f8c1820a1f20"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/crypto"
   packages = [
     "curve25519",
@@ -39,6 +54,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "9303351e90a687558346cbe5ec2e5415283952a8a5f80821f4c0dfe6af7cd3c5"
+  inputs-digest = "617c2cd9f99dc5eb3f2e7b889523a58f60ac1f9f00ad13a4bc1ee3a5dd0d7cff"
   solver-name = "gps-cdcl"
   solver-version = 1
