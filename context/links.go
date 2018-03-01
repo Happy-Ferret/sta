@@ -53,7 +53,7 @@ func (c *Context) GetLink(name string) (*Link, error) {
 	}
 
 	for _, l := range c.Links {
-		if matched, err := regexp.Match("^"+name+".*$", []byte(l.name)); err == nil && matched {
+		if matched, err := regexp.Match("^"+regexp.QuoteMeta(name)+".*$", []byte(l.name)); err == nil && matched {
 			return l, nil
 		}
 	}

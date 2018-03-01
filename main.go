@@ -10,7 +10,6 @@ import (
 	"github.com/ribacq/sta/display"
 	"github.com/ribacq/sta/games"
 	"log"
-	//"regexp"
 )
 
 // gameHandler treats an ssh session with one user.
@@ -25,28 +24,32 @@ func gameHandler(sess ssh.Session) {
 	disp := display.New(sess)
 	// main loop
 	line := "look"
+	var completionOptions []string
+	var err error
+	var out string
 	for {
-		// clear screen
-		err := disp.Clear()
-		if err != nil {
-			log.Print(err.Error())
-		}
-
 		// execute command and print output
-		out, err := game.Exec(line)
+		out, err = game.Exec(line)
 		if err != nil {
-			disp.WriteLine(err.Error())
+			if err = disp.WriteLine(err.Error()); err != nil {
+				log.Println(err.Error())
+				return
+			}
 		} else if len(out) > 0 {
-			disp.WriteLine(out)
+			completionOptions, err = disp.WriteParsed(out)
+			if err != nil {
+				log.Println(err.Error())
+				return
+			}
 		}
 
-		// exit?
+		// quit?
 		if game.Quit() {
 			break
 		}
 
 		// prompt with context name
-		disp.CompleteWith(game.AllCommands())
+		disp.CompleteWith(append(game.AllCommands(), completionOptions...))
 		line, err = disp.ReadLine(game.Context.Name)
 		if err != nil {
 			log.Println(err.Error())

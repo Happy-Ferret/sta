@@ -14,24 +14,24 @@ func Entrance() *Context {
 }
 
 func init() {
-	entrance.Description = "You are at the entrance of a most fearsome dungeon. Be brave. The only way is a corridor going to the north."
+	entrance.Description = "You are at the entrance of a most fearsome dungeon. Be brave and feel free to /ask for help/help/. The only way is a corridor going to the **north**."
 
-	corridor.Description = "This is a mossy, dirty corridor carven in the mountainside. You can go south back to the entrance, and there is a solid iron door barring the way up north."
+	corridor.Description = "This is a mossy, dirty corridor carven in the mountainside. You can go **south** back to the entrance, and there is a solid iron door barring the way up **north**."
 
-	temple.Description = "You are inside of a temple of blue-green translucent stone. A chandelier hangs down over an altar. The exit is an iron door to the south."
+	temple.Description = "You are inside of a temple of blue-green translucent stone. A chandelier hangs down over an altar. The exit is an iron door to the **south**."
 
-	key.Description = "It is a small metal key. It doesn’t look like anything special."
+	key.Description = "It is a small metal *key*. It doesn’t look like anything special."
 	key.MakeTakeable(true)
 	key.Properties["key"] = "iron#0"
 
-	apple.Description = "It is a yellow apple. It smells good."
+	apple.Description = "It is a yellow *apple*. It smells good."
 
 	entrance.AddLink("north", "", false, corridor)
 	corridor.AddLink("south", "", false, entrance)
 	corridor.Contents = append(corridor.Contents, key, apple)
 
-	corToTemple := corridor.AddLink("north", "iron#0", true, temple)
-	templeToCor := temple.AddLink("south", "iron#0", true, corridor)
+	corToTemple := corridor.AddLink("door", "iron#0", true, temple)
+	templeToCor := temple.AddLink("door", "iron#0", true, corridor)
 	corToTemple.slaves = append(corToTemple.slaves, templeToCor)
 	templeToCor.slaves = append(templeToCor.slaves, corToTemple)
 }

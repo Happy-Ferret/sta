@@ -53,7 +53,7 @@ func Look(c, player *Context, cmd []string) (out string, err error) {
 			if item == player {
 				out += "you"
 			} else {
-				out += item.Name
+				out += "*" + item.Name + "*"
 			}
 		}
 		out += "."
@@ -66,7 +66,7 @@ func Look(c, player *Context, cmd []string) (out string, err error) {
 			if i > 0 {
 				out += ", "
 			}
-			out += l.Name()
+			out += "**" + l.Name() + "**"
 			if l.locked {
 				out += " (locked)"
 			}
