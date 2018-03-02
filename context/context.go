@@ -40,14 +40,18 @@ func (c *Context) Exec(player *Context, args []string) (out string, err error) {
 	return "", errors.New("c.Exec: no such command " + args[0])
 }
 
-// HasCommand gets whether the command exists in given context.
+// HasCommand gets whether the command exists in given context with no ambiguity.
 func (c *Context) HasCommand(cmd string) (command string, ok bool) {
-	for command := range c.Commands {
-		if matched, err := regexp.Match("^"+cmd+".*$", []byte(command)); err == nil && matched {
-			return command, true
+	for testedCommand := range c.Commands {
+		if matched, err := regexp.Match("^"+cmd+".*$", []byte(testedCommand)); err == nil && matched {
+			if ok {
+				return "", false
+			}
+			command = testedCommand
+			ok = true
 		}
 	}
-	return "", false
+	return
 }
 
 // Pick finds a *Context from a Context.Contents by name without modifying the slice.

@@ -84,14 +84,18 @@ func (g *Game) Exec(cmd string) (out string, err error) {
 	return "", errors.New("Command ‘" + args[0] + "’ is not allowed.")
 }
 
-// HasCommand returns whether a command exists in the Game variable.
+// HasCommand returns whether a command exists in the Game variable with no ambiguity.
 func (g *Game) HasCommand(cmd string) (command string, ok bool) {
-	for command := range g.Commands {
-		if matched, err := regexp.Match("^"+cmd+".*$", []byte(command)); err == nil && matched {
-			return command, true
+	for testedCommand := range g.Commands {
+		if matched, err := regexp.Match("^"+cmd+".*$", []byte(testedCommand)); err == nil && matched {
+			if ok {
+				return "", false
+			}
+			command = testedCommand
+			ok = true
 		}
 	}
-	return "", false
+	return
 }
 
 // AllCommands returns a slice of all currently accessible commands.
