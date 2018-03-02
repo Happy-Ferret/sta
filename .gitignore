@@ -1,9 +1,4 @@
-*.aux
-*.log
-*.out
-*.swp
-*.lof
+.*.swp
 sta
-vendor
 id_rsa
 id_rsa.pub
