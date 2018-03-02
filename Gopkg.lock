@@ -15,12 +15,6 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/jpillora/ansi"
-  packages = ["."]
-  revision = "f496b27cd669dffb23ce87577824f749f6a8dae9"
-
-[[projects]]
-  branch = "master"
   name = "github.com/lib/pq"
   packages = [
     ".",
@@ -54,6 +48,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "617c2cd9f99dc5eb3f2e7b889523a58f60ac1f9f00ad13a4bc1ee3a5dd0d7cff"
+  inputs-digest = "ec4e645274d1fad41fb65b0f29d90380a1786ef052f43af115582f171311ee50"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -1,7 +1,7 @@
 /*
 Package games provides type Game which represent data for a single player’s current game.
 */
-package games
+package game
 
 import (
 	"errors"

@@ -8,7 +8,7 @@ import (
 	"github.com/gliderlabs/ssh"
 	"github.com/ribacq/sta/context"
 	"github.com/ribacq/sta/display"
-	"github.com/ribacq/sta/games"
+	"github.com/ribacq/sta/game"
 	"log"
 )
 
@@ -17,40 +17,45 @@ func gameHandler(sess ssh.Session) {
 	log.Println(sess.User() + " connected.")
 	defer log.Println(sess.User() + " disconnected.")
 
-	// game with player name and first context
-	game := games.New(sess.User(), context.Entrance())
-
 	// display
 	disp := display.New(sess)
+
+	// game with player name and first context
+	g := game.New(sess.User(), context.Entrance())
+
 	// main loop
 	line := "look"
-	var completionOptions []string
-	var err error
-	var out string
+	oldctx := g.Context
+	disp.AppendComplete(g.AllCommands())
 	for {
 		// execute command and print output
-		out, err = game.Exec(line)
+		out, err := g.Exec(line)
+		if oldctx != g.Context {
+			oldctx = g.Context
+			disp.ResetComplete()
+			disp.AppendComplete(g.AllCommands())
+		}
 		if err != nil {
 			if err = disp.WriteLine(err.Error()); err != nil {
 				log.Println(err.Error())
 				return
 			}
 		} else if len(out) > 0 {
-			completionOptions, err = disp.WriteParsed(out)
+			cmds, err := disp.WriteParsed(out)
 			if err != nil {
 				log.Println(err.Error())
 				return
 			}
+			disp.AppendComplete(cmds)
 		}
 
 		// quit?
-		if game.Quit() {
+		if g.Quit() {
 			break
 		}
 
 		// prompt with context name
-		disp.CompleteWith(append(game.AllCommands(), completionOptions...))
-		line, err = disp.ReadLine(game.Context.Name)
+		line, err = disp.ReadLine(g.Context.Name)
 		if err != nil {
 			log.Println(err.Error())
 			return

@@ -1,4 +1,4 @@
-package games
+package game
 
 import (
 	"github.com/ribacq/sta/context"

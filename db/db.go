@@ -10,10 +10,6 @@ import (
 	"github.com/ribacq/sta/context"
 )
 
-func conn() (db *sql.DB, err error) {
-	return sql.Open("postgres", fmt.Sprintf("postgres://%v:%v@%v/%v?sslmode=disable", username, password, hostname, dbname))
-}
-
 // GetContext fetches a context from the database, given its ID.
 func GetContext(id int) (c *context.Context, err error) {
 	// open connection

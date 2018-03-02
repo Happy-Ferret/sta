@@ -26,5 +26,4 @@ ssh -p 2222 localhost
 
 ## Acknowledgements
 
-* https://github.com/jpillora/ansi for the vt100 escape sequences
 * https://github.com/gliderlabs/ssh for the ssh wrapper of https://golang.org/x/crypto/ssh
