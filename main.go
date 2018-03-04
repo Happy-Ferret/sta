@@ -27,7 +27,8 @@ func gameHandler(sess ssh.Session) {
 	var err error
 	var line string
 	if err := g.Exec("look"); err != nil {
-		log.Fatal(err.Error())
+		log.Println(err.Error())
+		return
 	}
 	oldctx := g.Context
 	disp.AppendComplete(g.AllCommands())
@@ -46,9 +47,10 @@ func gameHandler(sess ssh.Session) {
 			case out := <-g.Player.OutCH:
 				// if the player receives an event, write to output
 				if len(out) > 0 {
-					cmds, err := disp.WriteParsed("\n" + out)
+					cmds, err := disp.WriteParsed(out)
 					if err != nil {
-						log.Fatal(err.Error())
+						log.Println(err.Error())
+						return
 					}
 					disp.AppendComplete(cmds)
 				}
@@ -59,12 +61,14 @@ func gameHandler(sess ssh.Session) {
 	// input loop: read line, exec and reset autocomplete
 	go func() {
 		for {
-			line, err = disp.ReadLine(g.Context.Name)
+			line, err = disp.ReadLine(g.Player.Name + " | " + g.Context.Name)
 			if err != nil {
-				log.Fatal(err.Error())
+				log.Println(err.Error())
+				return
 			}
 			if err = g.Exec(line); err != nil {
-				log.Fatal(err.Error())
+				log.Println(err.Error())
+				return
 			}
 			if oldctx != g.Context {
 				oldctx = g.Context

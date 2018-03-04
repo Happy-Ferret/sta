@@ -12,6 +12,7 @@ var (
 		"drop":   Take,
 		"lock":   Lock,
 		"unlock": Lock,
+		"say":    Say,
 	}
 )
 
@@ -155,5 +156,15 @@ func Lock(c, player *Context, cmd []string) error {
 
 	// return if required key was not found in player.Contents
 	player.OutCH <- "!|Required key not found."
+	return nil
+}
+
+// Say writes a message publicly to the current context.
+func Say(c, player *Context, cmd []string) error {
+	if len(cmd) < 2 {
+		player.OutCH <- "!|You have to say something..."
+		return nil
+	}
+	c.OutCH <- "*" + player.Name + "*: " + strings.Join(cmd[1:], " ")
 	return nil
 }
