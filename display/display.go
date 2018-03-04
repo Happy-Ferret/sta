@@ -128,7 +128,12 @@ func (d *Display) ReadLine(prompt string) (string, error) {
 //     **word**    word
 //     *words*     look words
 //     /words/cmd/ cmd
+//     ^!|msg$     -
 func (d *Display) WriteParsed(str string) (cmds []string, err error) {
+	// ^!|msg$
+	reError := regexp.MustCompile("^!\\|(.*)$")
+	str = reError.ReplaceAllString(str, styles["red"]+"$1"+styles["reset"])
+
 	// **word** --> word
 	reWord := regexp.MustCompile("\\*\\*([^\\s\\*]+)\\*\\*")
 	str = reWord.ReplaceAllStringFunc(str, func(src string) string {

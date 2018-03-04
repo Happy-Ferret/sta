@@ -1,10 +1,9 @@
 /*
-Package games provides type Game which represent data for a single player’s current game.
+Package games provides type Game which represent data for a player’s current game.
 */
 package game
 
 import (
-	"errors"
 	"github.com/ribacq/sta/context"
 	"regexp"
 	"strings"
@@ -15,7 +14,7 @@ type Game struct {
 	Player   *context.Context
 	Context  *context.Context
 	Commands map[string]commandFunc
-	quit     bool
+	Quit     chan bool
 }
 
 // New returns a new game with given player name, current context and an empty bag.
@@ -29,25 +28,20 @@ func New(name string, ctx *context.Context) *Game {
 			"quit": quit,
 			"me":   me,
 		},
-		quit: false,
+		Quit: make(chan bool),
 	}
 	g.Context.Contents = append(g.Context.Contents, player)
 	return g
 }
 
-// Quit returns if we want to quit the game
-func (g Game) Quit() bool {
-	return g.quit
-}
-
 // ExecCommand executes a command provided as a string.
-func (g *Game) Exec(cmd string) (out string, err error) {
+func (g *Game) Exec(cmd string) error {
 	// first we’ll remove any excessive blank space
 	cmd = strings.TrimSpace(cmd)
 
 	// exit on empty command
 	if len(cmd) == 0 {
-		return "", nil
+		return nil
 	}
 
 	// then we’ll push seperate non blank args into a slice
@@ -62,7 +56,8 @@ func (g *Game) Exec(cmd string) (out string, err error) {
 	if l, err := g.Context.GetLink(args[0]); err == nil {
 		// link to another context
 		if l.Locked() {
-			return "", errors.New("You cannot go this way.")
+			g.Player.OutCH <- "!|You cannot go this way."
+			return nil
 		}
 		for i, ctx := range g.Context.Contents {
 			if ctx == g.Player {
@@ -70,7 +65,9 @@ func (g *Game) Exec(cmd string) (out string, err error) {
 				break
 			}
 		}
+		g.Context.EventsCH <- context.Event{g.Player, context.CharacterDoesEvent, "leaves"}
 		g.Context = l.Target()
+		g.Context.EventsCH <- context.Event{g.Player, context.CharacterDoesEvent, "comes this way"}
 		g.Context.Contents = append(g.Context.Contents, g.Player)
 		return context.Look(g.Context, g.Player, args)
 	} else if _, ok := g.Context.HasCommand(args[0]); ok {
@@ -81,7 +78,8 @@ func (g *Game) Exec(cmd string) (out string, err error) {
 		return g.Commands[command](g, args)
 	}
 	// error: command not found
-	return "", errors.New("Command ‘" + args[0] + "’ is not allowed.")
+	g.Player.OutCH <- "!|Command ‘" + args[0] + "’ is not allowed."
+	return nil
 }
 
 // HasCommand returns whether a command exists in the Game variable with no ambiguity.

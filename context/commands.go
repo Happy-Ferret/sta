@@ -1,7 +1,6 @@
 package context
 
 import (
-	"errors"
 	"regexp"
 	"strings"
 )
@@ -16,7 +15,7 @@ var (
 	}
 )
 
-type CommandFunc func(c, player *Context, cmd []string) (out string, err error)
+type CommandFunc func(c, player *Context, cmd []string) error
 
 // GetCommandFunc returns the function corresponding to the command.
 // The command name must be exact.
@@ -27,19 +26,23 @@ func GetCommandFunc(cmd string) (f CommandFunc, ok bool) {
 }
 
 // Look command gives a description of the context and available un-hidden links.
-func Look(c, player *Context, cmd []string) (out string, err error) {
+func Look(c, player *Context, cmd []string) error {
 	// maybe look for something else than c
 	if len(cmd) > 1 {
 		_, ctx, ok := c.Pick(strings.Join(cmd[1:], " "))
 		if !ok {
-			return "", errors.New("No such thing here.")
+			player.OutCH <- "!|No such thing here."
+			return nil
 		} else {
 			return Look(ctx, player, []string{})
 		}
 	}
 
+	// notify the looked context
+	c.EventsCH <- Event{player, LookEvent, c}
+
 	// display context description
-	out = c.Description
+	out := c.Description
 
 	// display context contents
 	if len(c.Contents) > 0 {
@@ -73,11 +76,12 @@ func Look(c, player *Context, cmd []string) (out string, err error) {
 		}
 	}
 
-	return
+	player.OutCH <- out
+	return nil
 }
 
 // Take puts an item into or out of the  player’s bag.
-func Take(c, player *Context, cmd []string) (out string, err error) {
+func Take(c, player *Context, cmd []string) error {
 	// set to and from depending on calling command (default is take)
 	from, to := c, player
 	if matched, err := regexp.Match("^"+cmd[0]+".*", []byte("drop")); err == nil && matched {
@@ -87,19 +91,22 @@ func Take(c, player *Context, cmd []string) (out string, err error) {
 	// transfer the object
 	if i, ctx, ok := from.Pick(strings.Join(cmd[1:], " ")); ok {
 		if _, ok := ctx.Properties["takeable"]; !ok {
-			return "You cannot take " + ctx.Name + ".", nil
+			player.OutCH <- "!|You cannot take " + ctx.Name + "."
+			return nil
 		}
 		from.Contents = append(from.Contents[0:i], from.Contents[i+1:]...)
 		to.Contents = append(to.Contents, ctx)
 		ctx.Container = to
-		return ctx.Name + " --> " + to.Name, nil
+		c.OutCH <- "*" + ctx.Name + "* --> *" + to.Name + "*"
+		return nil
 	}
-	return "", errors.New("There is no such thing here.")
+	player.OutCH <- "!|There is no such thing here."
+	return nil
 }
 
 // Lock locks or unlocks a link given in argument if the accurate key is owned
 // Command called with ‘lock’ or ‘unlock’.
-func Lock(c, player *Context, cmd []string) (out string, err error) {
+func Lock(c, player *Context, cmd []string) error {
 	// get whether we want to lock or unlock
 	action := true
 	if matched, err := regexp.Match("^"+cmd[0]+".*", []byte("unlock")); err == nil && matched {
@@ -109,12 +116,14 @@ func Lock(c, player *Context, cmd []string) (out string, err error) {
 	// get link or return if not found
 	l, err := c.GetLink(strings.Join(cmd[1:], " "))
 	if err != nil {
-		return "", errors.New("No such link found.")
+		player.OutCH <- "!|No such link found."
+		return nil
 	}
 
 	// return if link has no key
 	if !l.HasKey() {
-		return "", errors.New("The link has no lock.")
+		player.OutCH <- "The link has no lock."
+		return nil
 	}
 
 	// try to lock or unlock now
@@ -123,11 +132,11 @@ func Lock(c, player *Context, cmd []string) (out string, err error) {
 			// return if there is nothing to do
 			if l.locked == action {
 				if action {
-					out = l.Name() + " is already locked."
+					player.OutCH <- "!|" + l.Name() + " is already locked."
 				} else {
-					out = l.Name() + " is already unlocked."
+					player.OutCH <- "!|" + l.Name() + " is already unlocked."
 				}
-				return
+				return nil
 			}
 
 			// lock or unlock l and its slaves
@@ -136,14 +145,15 @@ func Lock(c, player *Context, cmd []string) (out string, err error) {
 				slave.locked = action
 			}
 			if action {
-				out = l.Name() + " locked!"
+				c.OutCH <- l.Name() + " locked!"
 			} else {
-				out = l.Name() + " unlocked!"
+				c.OutCH <- l.Name() + " unlocked!"
 			}
-			return
+			return nil
 		}
 	}
 
 	// return if required key was not found in player.Contents
-	return "", errors.New("Required key not found.")
+	player.OutCH <- "!|Required key not found."
+	return nil
 }

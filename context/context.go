@@ -18,6 +18,8 @@ type Context struct {
 	Links       []*Link
 	Commands    map[string]CommandFunc
 	Properties  map[string]string
+	EventsCH    chan Event
+	OutCH       chan string
 }
 
 // New returns a default context intialized with just a name and a look command.
@@ -28,16 +30,21 @@ func New(name string) *Context {
 		Properties: map[string]string{
 			"lookable": "lookable",
 		},
+		EventsCH: make(chan Event),
+		OutCH:    make(chan string, 256),
 	}
+
+	go c.handleEvents()
+
 	return c
 }
 
 // Exec executes a context command.
-func (c *Context) Exec(player *Context, args []string) (out string, err error) {
+func (c *Context) Exec(player *Context, args []string) error {
 	if command, ok := c.HasCommand(args[0]); ok {
 		return c.Commands[command](c, player, args)
 	}
-	return "", errors.New("c.Exec: no such command " + args[0])
+	return errors.New("c.Exec: no such command " + args[0])
 }
 
 // HasCommand gets whether the command exists in given context with no ambiguity.
