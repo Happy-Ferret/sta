@@ -50,6 +50,7 @@ func gameHandler(sess ssh.Session) {
 					cmds, err := disp.WriteParsed(out)
 					if err != nil {
 						log.Println(err.Error())
+						g.Quit <- true
 						return
 					}
 					disp.AppendComplete(cmds)
@@ -64,10 +65,12 @@ func gameHandler(sess ssh.Session) {
 			line, err = disp.ReadLine(g.Player.Name + " | " + g.Context.Name)
 			if err != nil {
 				log.Println(err.Error())
+				g.Quit <- true
 				return
 			}
 			if err = g.Exec(line); err != nil {
 				log.Println(err.Error())
+				g.Quit <- true
 				return
 			}
 			if oldctx != g.Context {

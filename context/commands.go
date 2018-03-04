@@ -84,21 +84,27 @@ func Look(c, player *Context, cmd []string) error {
 // Take puts an item into or out of the  player’s bag.
 func Take(c, player *Context, cmd []string) error {
 	// set to and from depending on calling command (default is take)
+	drop := false
 	from, to := c, player
 	if matched, err := regexp.Match("^"+cmd[0]+".*", []byte("drop")); err == nil && matched {
 		from, to = to, from
+		drop = true
 	}
 
 	// transfer the object
 	if i, ctx, ok := from.Pick(strings.Join(cmd[1:], " ")); ok {
 		if _, ok := ctx.Properties["takeable"]; !ok {
-			player.OutCH <- "!|You cannot take " + ctx.Name + "."
+			if drop {
+				player.OutCH <- "!|You cannot drop " + ctx.Name + "."
+			} else {
+				player.OutCH <- "!|You cannot take " + ctx.Name + "."
+			}
 			return nil
 		}
 		from.Contents = append(from.Contents[0:i], from.Contents[i+1:]...)
 		to.Contents = append(to.Contents, ctx)
 		ctx.Container = to
-		c.OutCH <- "*" + ctx.Name + "* --> *" + to.Name + "*"
+		c.EventsCH <- Event{player, TakeDropEvent, takeDropEventContent{ctx, drop}}
 		return nil
 	}
 	player.OutCH <- "!|There is no such thing here."
