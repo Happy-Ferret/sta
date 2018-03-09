@@ -171,6 +171,6 @@ func Say(c, player *Context, cmd []string) error {
 		player.OutCH <- "!|You have to say something..."
 		return nil
 	}
-	c.OutCH <- "*" + player.Name + "*: " + strings.Join(cmd[1:], " ")
+	c.OutCH <- "*" + player.Name + "*: `" + strings.Join(cmd[1:], " ") + "`"
 	return nil
 }

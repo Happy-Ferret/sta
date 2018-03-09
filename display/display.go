@@ -124,12 +124,18 @@ func (d *Display) ReadLine(prompt string) (string, error) {
 // WriteParsed parses a string and extracts commands from it and calls CompleteWith to set autocompletion to those commands.
 // It is typically called with a context description.
 //
-//     Syntax      Command
-//     **word**    word
-//     *words*     look words
-//     /words/cmd/ cmd
-//     ^!|msg$     -
+//     Syntax      Command    Style
+//     `msg`       -          no parsing
+//     ^!|msg$     -          red
+//     **word**    word       bright
+//     *words*     look words italic
+//     /words/cmd/ cmd        underscore
 func (d *Display) WriteParsed(str string) (cmds []string, err error) {
+	// `msg`
+	// FIXME
+	reEscape := regexp.MustCompile("`(.*)`")
+	str = reEscape.ReplaceAllString(str, "$1")
+
 	// ^!|msg$
 	reError := regexp.MustCompile("^!\\|(.*)$")
 	str = reError.ReplaceAllString(str, styles["red"]+"$1"+styles["reset"])

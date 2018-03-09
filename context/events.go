@@ -13,6 +13,8 @@ const (
 	CharacterDoesEvent
 	LookEvent
 	TakeDropEvent
+	ConnectionEvent
+	DisconnectionEvent
 )
 
 type takeDropEventContent struct {
@@ -26,19 +28,29 @@ func (c *Context) handleEvents() {
 		select {
 		case e := <-c.EventsCH:
 			if _, ok := c.Properties["player"]; !ok {
+				// if c is not a player, send event to all contained players
 				for _, ctx := range c.Contents {
 					if _, ok := ctx.Properties["player"]; ok {
 						ctx.EventsCH <- e
 					}
 				}
 			} else {
+				// c is a player
 				switch e.Type {
+				case ConnectionEvent:
+					if e.Source != c {
+						c.OutCH <- "*" + e.Source.Name + "* just joined the game."
+					}
+				case DisconnectionEvent:
+					if e.Source != c {
+						c.OutCH <- "*" + e.Source.Name + "* just left the game."
+					}
 				case CharacterDoesEvent:
 					if verb, ok := e.Content.(string); ok && e.Source != c {
 						c.OutCH <- "*" + e.Source.Name + "* " + verb + "."
 					}
 				case LookEvent:
-					if ctx, ok := e.Content.(*Context); ok && e.Source != c {
+					if ctx, ok := e.Content.(*Context); ok && e.Source != c && ctx != e.Source.Container {
 						c.OutCH <- "*" + e.Source.Name + "* is looking at " + ctx.Name + "."
 					}
 				case TakeDropEvent:

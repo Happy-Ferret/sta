@@ -12,17 +12,15 @@ import (
 // Game type with name of player and current context
 type Game struct {
 	Player   *context.Context
-	Context  *context.Context
 	Commands map[string]commandFunc
 	Quit     chan bool
 }
 
 // New returns a new game with given player name, current context and an empty bag.
 func New(name string, ctx *context.Context) *Game {
-	player := context.NewPlayer(name)
+	player := context.NewPlayer(name, ctx)
 	g := &Game{
-		Player:  player,
-		Context: ctx,
+		Player: player,
 		Commands: map[string]commandFunc{
 			"help": help,
 			"quit": quit,
@@ -30,7 +28,7 @@ func New(name string, ctx *context.Context) *Game {
 		},
 		Quit: make(chan bool),
 	}
-	g.Context.Contents = append(g.Context.Contents, player)
+	g.Player.Container.Contents = append(g.Player.Container.Contents, player)
 	return g
 }
 
@@ -53,26 +51,27 @@ func (g *Game) Exec(cmd string) error {
 	}
 
 	// now let’s execute the command
-	if l, err := g.Context.GetLink(args[0]); err == nil {
+	if l, err := g.Player.Container.GetLink(args[0]); err == nil {
 		// link to another context
 		if l.Locked() {
 			g.Player.OutCH <- "!|You cannot go this way."
 			return nil
 		}
-		for i, ctx := range g.Context.Contents {
+		for i, ctx := range g.Player.Container.Contents {
 			if ctx == g.Player {
-				g.Context.Contents = append(g.Context.Contents[:i], g.Context.Contents[i+1:]...)
+				g.Player.Container.Contents = append(g.Player.Container.Contents[:i], g.Player.Container.Contents[i+1:]...)
 				break
 			}
 		}
-		g.Context.EventsCH <- context.Event{g.Player, context.CharacterDoesEvent, "leaves"}
-		g.Context = l.Target()
-		g.Context.EventsCH <- context.Event{g.Player, context.CharacterDoesEvent, "comes this way"}
-		g.Context.Contents = append(g.Context.Contents, g.Player)
-		return context.Look(g.Context, g.Player, args)
-	} else if _, ok := g.Context.HasCommand(args[0]); ok {
+		g.Player.Container.EventsCH <- context.Event{g.Player, context.CharacterDoesEvent, "leaves"}
+		g.Player.Container = l.Target()
+		g.Player.Container.EventsCH <- context.Event{g.Player, context.CharacterDoesEvent, "comes this way"}
+		g.Player.Container.Contents = append(g.Player.Container.Contents, g.Player)
+		g.Player.Container = g.Player.Container
+		return context.Look(g.Player.Container, g.Player, args)
+	} else if _, ok := g.Player.Container.HasCommand(args[0]); ok {
 		// context command
-		return g.Context.Exec(g.Player, args)
+		return g.Player.Container.Exec(g.Player, args)
 	} else if command, ok := g.HasCommand(args[0]); ok {
 		// game command
 		return g.Commands[command](g, args)
@@ -101,10 +100,10 @@ func (g *Game) AllCommands() (cmds []string) {
 	for cmd := range g.Commands {
 		cmds = append(cmds, cmd)
 	}
-	for cmd := range g.Context.Commands {
+	for cmd := range g.Player.Container.Commands {
 		cmds = append(cmds, cmd)
 	}
-	for _, l := range g.Context.Links {
+	for _, l := range g.Player.Container.Links {
 		cmds = append(cmds, l.Name())
 	}
 	return
