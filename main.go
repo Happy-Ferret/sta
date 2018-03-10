@@ -5,6 +5,7 @@ The main function lauches an SSH server listening on localhost:2222.
 package main
 
 import (
+	"encoding/json"
 	"github.com/gliderlabs/ssh"
 	"github.com/ribacq/sta/context"
 	"github.com/ribacq/sta/display"
@@ -32,7 +33,6 @@ func gameHandler(sess ssh.Session) {
 		log.Println(err.Error())
 		return
 	}
-	oldctx := g.Player.Container
 	disp.AppendComplete(g.AllCommands())
 
 	// output loop
@@ -63,6 +63,7 @@ func gameHandler(sess ssh.Session) {
 
 	// input loop: read line, exec and reset autocomplete
 	go func() {
+		oldctx := g.Player.Container
 		for {
 			line, err = disp.ReadLine(g.Player.Name + " | " + g.Player.Container.Name)
 			if err != nil {
@@ -79,6 +80,12 @@ func gameHandler(sess ssh.Session) {
 				oldctx = g.Player.Container
 				disp.ResetComplete()
 				disp.AppendComplete(g.AllCommands())
+				j, err := json.Marshal(oldctx)
+				if err != nil {
+					log.Println(err.Error())
+					return
+				}
+				log.Printf("len(json(ctx)): %v", len(j))
 			}
 		}
 	}()

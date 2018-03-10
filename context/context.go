@@ -13,13 +13,17 @@ import (
 type Context struct {
 	Name        string
 	Description string
-	Container   *Context
+	Container   *Context `json:"-"`
 	Contents    []*Context
 	Links       []*Link
 	Commands    map[string]CommandFunc
 	Properties  map[string]string
-	EventsCH    chan Event
-	OutCH       chan string
+	EventsCH    chan Event  `json:"-"`
+	OutCH       chan string `json:"-"`
+}
+
+func (cf CommandFunc) MarshalJSON() ([]byte, error) {
+	return []byte("{}"), nil
 }
 
 // New returns a default context intialized with just a name and a look command.

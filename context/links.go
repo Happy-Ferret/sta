@@ -14,6 +14,10 @@ type Link struct {
 	slaves []*Link
 }
 
+func (l Link) MarshalJSON() ([]byte, error) {
+	return []byte("{\"name\": \"" + l.name + "\"}"), nil
+}
+
 // AddLink adds a new link to a context and returns it.
 func (c *Context) AddLink(name, key string, locked bool, target *Context) *Link {
 	l := &Link{
