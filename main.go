@@ -20,6 +20,7 @@ func gameHandler(sess ssh.Session) {
 
 	// display
 	disp := display.New(sess)
+	disp.Motd()
 
 	// game with player name and first context
 	g := game.New(sess.User(), context.Entrance())
@@ -40,7 +41,7 @@ func gameHandler(sess ssh.Session) {
 		for {
 			select {
 			case out := <-g.Player.Container.OutCH:
-				// if the context receives an event, forward it to all contained players
+				// if the context receives en event, forward it to all contained players
 				for _, ctx := range g.Player.Container.Contents {
 					if _, ok := ctx.Properties["player"]; ok {
 						ctx.OutCH <- out
