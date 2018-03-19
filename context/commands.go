@@ -43,7 +43,7 @@ func Look(c, player *Context, cmd []string) error {
 	c.EventsCH <- Event{player, LookEvent, c}
 
 	// display context description
-	out := c.Description
+	out := c.Description()
 
 	// display context contents
 	if len(c.Contents) > 0 {
@@ -57,7 +57,7 @@ func Look(c, player *Context, cmd []string) error {
 			if item == player {
 				out += "you"
 			} else {
-				out += "*" + item.Name + "*"
+				out += "*" + item.Name() + "*"
 			}
 		}
 		out += "."
@@ -95,15 +95,15 @@ func Take(c, player *Context, cmd []string) error {
 	if i, ctx, ok := from.Pick(strings.Join(cmd[1:], " ")); ok {
 		if _, ok := ctx.Properties["takeable"]; !ok {
 			if drop {
-				player.OutCH <- "!|You cannot drop " + ctx.Name + "."
+				player.OutCH <- "!|You cannot drop " + ctx.Name() + "."
 			} else {
-				player.OutCH <- "!|You cannot take " + ctx.Name + "."
+				player.OutCH <- "!|You cannot take " + ctx.Name() + "."
 			}
 			return nil
 		}
 		from.Contents = append(from.Contents[0:i], from.Contents[i+1:]...)
 		to.Contents = append(to.Contents, ctx)
-		ctx.Container = to
+		ctx.SetContainer(to)
 		c.EventsCH <- Event{player, TakeDropEvent, takeDropEventContent{ctx, drop}}
 		return nil
 	}
@@ -171,6 +171,6 @@ func Say(c, player *Context, cmd []string) error {
 		player.OutCH <- "!|You have to say something..."
 		return nil
 	}
-	c.OutCH <- "*" + player.Name + "*: `" + strings.Join(cmd[1:], " ") + "`"
+	c.OutCH <- "*" + player.Name() + "*: `" + strings.Join(cmd[1:], " ") + "`"
 	return nil
 }

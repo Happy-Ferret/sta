@@ -24,8 +24,8 @@ func gameHandler(sess ssh.Session) {
 
 	// game with player name and first context
 	g := game.New(sess.User(), context.Entrance())
-	g.Player.Container.EventsCH <- context.Event{g.Player, context.ConnectionEvent, nil}
-	defer func() { g.Player.Container.EventsCH <- context.Event{g.Player, context.DisconnectionEvent, nil} }()
+	g.Player.Container().EventsCH <- context.Event{g.Player, context.ConnectionEvent, nil}
+	defer func() { g.Player.Container().EventsCH <- context.Event{g.Player, context.DisconnectionEvent, nil} }()
 
 	// main loops
 	var err error
@@ -40,9 +40,9 @@ func gameHandler(sess ssh.Session) {
 	go func() {
 		for {
 			select {
-			case out := <-g.Player.Container.OutCH:
+			case out := <-g.Player.Container().OutCH:
 				// if the context receives en event, forward it to all contained players
-				for _, ctx := range g.Player.Container.Contents {
+				for _, ctx := range g.Player.Container().Contents {
 					if _, ok := ctx.Properties["player"]; ok {
 						ctx.OutCH <- out
 					}
@@ -64,9 +64,9 @@ func gameHandler(sess ssh.Session) {
 
 	// input loop: read line, exec and reset autocomplete
 	go func() {
-		oldctx := g.Player.Container
+		oldctx := g.Player.Container()
 		for {
-			line, err = disp.ReadLine(g.Player.Name + " | " + g.Player.Container.Name)
+			line, err = disp.ReadLine(g.Player.Name() + " | " + g.Player.Container().Name())
 			if err != nil {
 				log.Println(err.Error())
 				g.Quit <- true
@@ -77,8 +77,8 @@ func gameHandler(sess ssh.Session) {
 				g.Quit <- true
 				return
 			}
-			if oldctx != g.Player.Container {
-				oldctx = g.Player.Container
+			if oldctx != g.Player.Container() {
+				oldctx = g.Player.Container()
 				disp.ResetComplete()
 				disp.AppendComplete(g.AllCommands())
 				j, err := json.Marshal(oldctx)
@@ -86,7 +86,7 @@ func gameHandler(sess ssh.Session) {
 					log.Println(err.Error())
 					return
 				}
-				log.Printf("len(json(ctx)): %v", len(j))
+				log.Printf("len(json(%s)): %v", oldctx.Name(), len(j))
 			}
 		}
 	}()

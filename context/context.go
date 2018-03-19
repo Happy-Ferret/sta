@@ -11,9 +11,9 @@ import (
 
 // Context is the type representing the current player’s position
 type Context struct {
-	Name        string
-	Description string
-	Container   *Context `json:"-"`
+	name        string
+	description string
+	container   *Context `json:"-"`
 	Contents    []*Context
 	Links       []*Link
 	Commands    map[string]CommandFunc
@@ -29,7 +29,7 @@ func (cf CommandFunc) MarshalJSON() ([]byte, error) {
 // New returns a default context intialized with just a name and a look command.
 func New(name string) *Context {
 	c := &Context{
-		Name:     name,
+		name:     name,
 		Commands: commandFuncs,
 		Properties: map[string]string{
 			"lookable": "lookable",
@@ -42,6 +42,44 @@ func New(name string) *Context {
 
 	return c
 }
+
+//////
+// Getters and setters
+//////
+
+// Name is a getter for context name.
+func (c *Context) Name() string {
+	return c.name
+}
+
+// SetName updates a context’s name.
+func (c *Context) SetName(name string) {
+	c.name = name
+}
+
+// Description is a getter for context description.
+func (c *Context) Description() string {
+	return c.description
+}
+
+// SetDescription updates a context’s description.
+func (c *Context) SetDescription(description string) {
+	c.description = description
+}
+
+// Container is a getter for a context’s container.
+func (c *Context) Container() *Context {
+	return c.container
+}
+
+// SetContainer is a setter for a context’s container.
+func (c *Context) SetContainer(container *Context) {
+	c.container = container
+}
+
+//////
+// Other actions
+//////
 
 // Exec executes a context command.
 func (c *Context) Exec(player *Context, args []string) error {
@@ -65,8 +103,8 @@ func (c *Context) HasCommand(cmd string) (command string, ok bool) {
 	return
 }
 
-// Pick finds a *Context from a Context.Contents by name without modifying the slice.
-// Returns i the context index in the Contents slice,
+// Pick finds a *Context from a Context.contents by name without modifying the slice.
+// Returns i the context index in the contents slice,
 // ctx the found *Context,
 // ok a boolean indicating whether the contex was found
 func (c *Context) Pick(name string) (i int, ctx *Context, ok bool) {
@@ -76,9 +114,9 @@ func (c *Context) Pick(name string) (i int, ctx *Context, ok bool) {
 		return
 	}
 
-	// looks through all of c.Contents if we find the rightly named context
+	// looks through all of c.contents if we find the rightly named context
 	for i, ctx := range c.Contents {
-		ok, err := regexp.Match(".*"+name+".*", []byte(ctx.Name))
+		ok, err := regexp.Match(".*"+name+".*", []byte(ctx.name))
 		if err == nil && ok {
 			return i, ctx, ok
 		}

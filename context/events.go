@@ -39,33 +39,33 @@ func (c *Context) handleEvents() {
 				switch e.Type {
 				case ConnectionEvent:
 					if e.Source != c {
-						c.OutCH <- "*" + e.Source.Name + "* just joined the game."
+						c.OutCH <- "*" + e.Source.Name() + "* just joined the game."
 					}
 				case DisconnectionEvent:
 					if e.Source != c {
-						c.OutCH <- "*" + e.Source.Name + "* just left the game."
+						c.OutCH <- "*" + e.Source.Name() + "* just left the game."
 					}
 				case CharacterDoesEvent:
 					if verb, ok := e.Content.(string); ok && e.Source != c {
-						c.OutCH <- "*" + e.Source.Name + "* " + verb + "."
+						c.OutCH <- "*" + e.Source.Name() + "* " + verb + "."
 					}
 				case LookEvent:
-					if ctx, ok := e.Content.(*Context); ok && e.Source != c && ctx != e.Source.Container {
-						c.OutCH <- "*" + e.Source.Name + "* is looking at " + ctx.Name + "."
+					if ctx, ok := e.Content.(*Context); ok && e.Source != c && ctx != e.Source.Container() {
+						c.OutCH <- "*" + e.Source.Name() + "* is looking at " + ctx.Name() + "."
 					}
 				case TakeDropEvent:
 					if cs, ok := e.Content.(takeDropEventContent); ok {
 						if c != e.Source {
 							if !cs.drop {
-								c.OutCH <- "*" + e.Source.Name + "* takes *" + cs.ctx.Name + "*."
+								c.OutCH <- "*" + e.Source.Name() + "* takes *" + cs.ctx.Name() + "*."
 							} else {
-								c.OutCH <- "*" + e.Source.Name + "* drops *" + cs.ctx.Name + "*."
+								c.OutCH <- "*" + e.Source.Name() + "* drops *" + cs.ctx.Name() + "*."
 							}
 						} else {
 							if !cs.drop {
-								c.OutCH <- "You take *" + cs.ctx.Name + "*."
+								c.OutCH <- "You take *" + cs.ctx.Name() + "*."
 							} else {
-								c.OutCH <- "You drop *" + cs.ctx.Name + "*."
+								c.OutCH <- "You drop *" + cs.ctx.Name() + "*."
 							}
 						}
 					}
