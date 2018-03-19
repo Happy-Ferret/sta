@@ -18,6 +18,10 @@ var (
 
 type CommandFunc func(c, player *Context, cmd []string) error
 
+func (cf CommandFunc) MarshalJSON() ([]byte, error) {
+	return []byte("{}"), nil
+}
+
 // GetCommandFunc returns the function corresponding to the command.
 // The command name must be exact.
 // This function exists to protect commandFuncs from exterior modification.
@@ -26,7 +30,7 @@ func GetCommandFunc(cmd string) (f CommandFunc, ok bool) {
 	return
 }
 
-// Look command gives a description of the context and available un-hidden links.
+// Look command gives a description of the context and available contents and links.
 func Look(c, player *Context, cmd []string) error {
 	// maybe look for something else than c
 	if len(cmd) > 1 {
@@ -46,12 +50,12 @@ func Look(c, player *Context, cmd []string) error {
 	out := c.Description()
 
 	// display context contents
-	if len(c.Contents) > 0 {
+	if len(c.Contents()) > 0 {
 		out += "\nThere is "
-		for i, item := range c.Contents {
-			if i > 0 && i < len(c.Contents)-1 {
+		for i, item := range c.Contents() {
+			if i > 0 && i < len(c.Contents())-1 {
 				out += ", "
-			} else if i > 0 && i == len(c.Contents)-1 {
+			} else if i > 0 && i == len(c.Contents())-1 {
 				out += " and "
 			}
 			if item == player {
@@ -64,9 +68,9 @@ func Look(c, player *Context, cmd []string) error {
 	}
 
 	// display context links
-	if len(c.Links) > 0 {
+	if len(c.Links()) > 0 {
 		out += "\nLinks: "
-		for i, l := range c.Links {
+		for i, l := range c.Links() {
 			if i > 0 {
 				out += ", "
 			}
@@ -101,8 +105,8 @@ func Take(c, player *Context, cmd []string) error {
 			}
 			return nil
 		}
-		from.Contents = append(from.Contents[0:i], from.Contents[i+1:]...)
-		to.Contents = append(to.Contents, ctx)
+		from.RemoveContent(i)
+		to.AppendContent(ctx)
 		ctx.SetContainer(to)
 		c.EventsCH <- Event{player, TakeDropEvent, takeDropEventContent{ctx, drop}}
 		return nil
@@ -134,7 +138,7 @@ func Lock(c, player *Context, cmd []string) error {
 	}
 
 	// try to lock or unlock now
-	for _, ctx := range player.Contents {
+	for _, ctx := range player.Contents() {
 		if val, ok := ctx.Properties["key"]; ok && val == l.key {
 			// return if there is nothing to do
 			if l.locked == action {
@@ -160,7 +164,7 @@ func Lock(c, player *Context, cmd []string) error {
 		}
 	}
 
-	// return if required key was not found in player.Contents
+	// return if required key was not found in player.contents
 	player.OutCH <- "!|Required key not found."
 	return nil
 }

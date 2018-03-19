@@ -29,7 +29,7 @@ func (c *Context) handleEvents() {
 		case e := <-c.EventsCH:
 			if _, ok := c.Properties["player"]; !ok {
 				// if c is not a player, send event to all contained players
-				for _, ctx := range c.Contents {
+				for _, ctx := range c.Contents() {
 					if _, ok := ctx.Properties["player"]; ok {
 						ctx.EventsCH <- e
 					}

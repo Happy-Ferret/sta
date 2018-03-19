@@ -1,5 +1,6 @@
 /*
 Package db manages database access for github.com/ribacq/sta.
+Variables username, password, hostname & dbname are declared in credentials.go.
 */
 package db
 
@@ -9,6 +10,10 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/ribacq/sta/context"
 )
+
+func conn() (db *sql.DB, err error) {
+	return sql.Open("postgres", fmt.Sprintf("postgres://%v:%v@%v/%v?sslmode=disable", username, password, hostname, dbname))
+}
 
 // GetContext fetches a context from the database, given its ID.
 func GetContext(id int) (c *context.Context, err error) {
@@ -21,14 +26,14 @@ func GetContext(id int) (c *context.Context, err error) {
 	// let’s fetch data from the various tables
 	// name and description
 	row := db.QueryRow("select (name, description) from sta.contexts where id = $1", id)
-	err = row.Scan(&(c.Name), &(c.Description))
+	err = row.Scan(&(c.name), &(c.description))
 	if err != nil {
 		return
 	}
 
 	// container
 	row = db.QueryRow("select (container) from sta.contexts_container where context = $1", id)
-	err = row.Scan(&(c.Container))
+	err = row.Scan(&(c.container))
 	if err != nil {
 		return
 	}

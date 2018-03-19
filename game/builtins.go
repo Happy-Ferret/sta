@@ -17,7 +17,7 @@ func help(g *Game, cmd []string) error {
 	}
 
 	// print all available commands
-	g.Player.OutCH <- "Available commands: " + strings.Join(g.AllCommands(), ", ")
+	g.Player.OutCH <- "Available commands: " + strings.Join(g.AllCommandNames(), ", ")
 	return nil
 }
 

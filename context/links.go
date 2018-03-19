@@ -26,7 +26,7 @@ func (c *Context) AddLink(name, key string, locked bool, target *Context) *Link 
 		locked: locked,
 		target: target,
 	}
-	c.Links = append(c.Links, l)
+	c.links = append(c.links, l)
 	return l
 }
 
@@ -56,7 +56,7 @@ func (c *Context) GetLink(name string) (*Link, error) {
 		return nil, errors.New("No name was given.")
 	}
 
-	for _, l := range c.Links {
+	for _, l := range c.links {
 		if matched, err := regexp.Match("^"+regexp.QuoteMeta(name)+".*$", []byte(l.name)); err == nil && matched {
 			return l, nil
 		}
@@ -73,7 +73,7 @@ func (l *Link) Try(player *Context) (target *Context, ok bool) {
 	}
 
 	// link is locked: look for a key in player.Contents
-	for _, ctx := range player.Contents {
+	for _, ctx := range player.Contents() {
 		if val, ok := ctx.Properties["key"]; ok && val == l.key {
 			return l.target, true
 		}

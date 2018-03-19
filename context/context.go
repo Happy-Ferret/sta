@@ -14,23 +14,19 @@ type Context struct {
 	name        string
 	description string
 	container   *Context `json:"-"`
-	Contents    []*Context
-	Links       []*Link
-	Commands    map[string]CommandFunc
+	contents    []*Context
+	links       []*Link
+	commands    map[string]CommandFunc
 	Properties  map[string]string
 	EventsCH    chan Event  `json:"-"`
 	OutCH       chan string `json:"-"`
-}
-
-func (cf CommandFunc) MarshalJSON() ([]byte, error) {
-	return []byte("{}"), nil
 }
 
 // New returns a default context intialized with just a name and a look command.
 func New(name string) *Context {
 	c := &Context{
 		name:     name,
-		Commands: commandFuncs,
+		commands: commandFuncs,
 		Properties: map[string]string{
 			"lookable": "lookable",
 		},
@@ -77,6 +73,59 @@ func (c *Context) SetContainer(container *Context) {
 	c.container = container
 }
 
+// Contents is a getter for a context’s contents.
+func (c *Context) Contents() []*Context {
+	return c.contents
+}
+
+// Content is a getter for an item in a context’s contents.
+func (c *Context) Content(i int) *Context {
+	if i < 0 || i >= len(c.contents) {
+		return nil
+	}
+	return c.contents[i]
+}
+
+// AppendContent appends to a context’s contents.
+func (c *Context) AppendContent(ctxs ...*Context) {
+	c.contents = append(c.contents, ctxs...)
+}
+
+// RemoveContent removes a context from another, based on it’s index in the contents slice.
+func (c *Context) RemoveContent(i int) {
+	if i < 0 || i >= len(c.contents) {
+		return
+	}
+	c.contents = append(c.contents[:i], c.contents[i+1:]...)
+}
+
+// RemoveFromContainer removes a context from its container.
+func (c *Context) RemoveFromContainer() bool {
+	if c.container == nil {
+		return false
+	}
+	for i, ctx := range c.container.Contents() {
+		if ctx == c {
+			c.container.RemoveContent(i)
+			return true
+		}
+	}
+	return false
+}
+
+// Links is a getter for a context’s links.
+func (c *Context) Links() []*Link {
+	return c.links
+}
+
+// CommandNames returns the names of available commands for this context.
+func (c *Context) CommandNames() (names []string) {
+	for cmd := range c.commands {
+		names = append(names, cmd)
+	}
+	return
+}
+
 //////
 // Other actions
 //////
@@ -84,14 +133,14 @@ func (c *Context) SetContainer(container *Context) {
 // Exec executes a context command.
 func (c *Context) Exec(player *Context, args []string) error {
 	if command, ok := c.HasCommand(args[0]); ok {
-		return c.Commands[command](c, player, args)
+		return c.commands[command](c, player, args)
 	}
 	return errors.New("c.Exec: no such command " + args[0])
 }
 
 // HasCommand gets whether the command exists in given context with no ambiguity.
 func (c *Context) HasCommand(cmd string) (command string, ok bool) {
-	for testedCommand := range c.Commands {
+	for testedCommand := range c.commands {
 		if matched, err := regexp.Match("^"+cmd+".*$", []byte(testedCommand)); err == nil && matched {
 			if ok {
 				return "", false
@@ -115,7 +164,7 @@ func (c *Context) Pick(name string) (i int, ctx *Context, ok bool) {
 	}
 
 	// looks through all of c.contents if we find the rightly named context
-	for i, ctx := range c.Contents {
+	for i, ctx := range c.contents {
 		ok, err := regexp.Match(".*"+name+".*", []byte(ctx.name))
 		if err == nil && ok {
 			return i, ctx, ok

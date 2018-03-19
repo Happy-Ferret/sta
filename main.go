@@ -34,7 +34,7 @@ func gameHandler(sess ssh.Session) {
 		log.Println(err.Error())
 		return
 	}
-	disp.AppendComplete(g.AllCommands())
+	disp.AppendComplete(g.AllCommandNames())
 
 	// output loop
 	go func() {
@@ -42,7 +42,7 @@ func gameHandler(sess ssh.Session) {
 			select {
 			case out := <-g.Player.Container().OutCH:
 				// if the context receives en event, forward it to all contained players
-				for _, ctx := range g.Player.Container().Contents {
+				for _, ctx := range g.Player.Container().Contents() {
 					if _, ok := ctx.Properties["player"]; ok {
 						ctx.OutCH <- out
 					}
@@ -80,7 +80,7 @@ func gameHandler(sess ssh.Session) {
 			if oldctx != g.Player.Container() {
 				oldctx = g.Player.Container()
 				disp.ResetComplete()
-				disp.AppendComplete(g.AllCommands())
+				disp.AppendComplete(g.AllCommandNames())
 				j, err := json.Marshal(oldctx)
 				if err != nil {
 					log.Println(err.Error())

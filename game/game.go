@@ -28,7 +28,7 @@ func New(name string, ctx *context.Context) *Game {
 		},
 		Quit: make(chan bool),
 	}
-	g.Player.Container().Contents = append(g.Player.Container().Contents, player)
+	g.Player.Container().AppendContent(player)
 	return g
 }
 
@@ -57,16 +57,16 @@ func (g *Game) Exec(cmd string) error {
 			g.Player.OutCH <- "!|You cannot go this way."
 			return nil
 		}
-		for i, ctx := range g.Player.Container().Contents {
+		for i, ctx := range g.Player.Container().Contents() {
 			if ctx == g.Player {
-				g.Player.Container().Contents = append(g.Player.Container().Contents[:i], g.Player.Container().Contents[i+1:]...)
+				g.Player.Container().RemoveContent(i)
 				break
 			}
 		}
 		g.Player.Container().EventsCH <- context.Event{g.Player, context.CharacterDoesEvent, "leaves"}
 		g.Player.SetContainer(l.Target())
 		g.Player.Container().EventsCH <- context.Event{g.Player, context.CharacterDoesEvent, "comes this way"}
-		g.Player.Container().Contents = append(g.Player.Container().Contents, g.Player)
+		g.Player.Container().AppendContent(g.Player)
 		return context.Look(g.Player.Container(), g.Player, args)
 	} else if _, ok := g.Player.Container().HasCommand(args[0]); ok {
 		// context command
@@ -95,14 +95,13 @@ func (g *Game) HasCommand(cmd string) (command string, ok bool) {
 }
 
 // AllCommands returns a slice of all currently accessible commands.
-func (g *Game) AllCommands() (cmds []string) {
+func (g *Game) AllCommandNames() (cmds []string) {
 	for cmd := range g.Commands {
 		cmds = append(cmds, cmd)
 	}
-	for cmd := range g.Player.Container().Commands {
-		cmds = append(cmds, cmd)
-	}
-	for _, l := range g.Player.Container().Links {
+	cmds = append(cmds, g.Player.CommandNames()...)
+	cmds = append(cmds, g.Player.Container().CommandNames()...)
+	for _, l := range g.Player.Container().Links() {
 		cmds = append(cmds, l.Name())
 	}
 	return
